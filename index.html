@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nysa Lab — Gestionale</title>
+<style>
+  :root{
+    --green: #234739;
+    --green-soft: #2e5a48;
+    --cream: #F5EBDC;
+    --cream-card: #FFFBF3;
+    --terracotta: #C15B37;
+    --gold: #C6862E;
+    --ink: #2A2622;
+    --ink-soft: #6b6156;
+    --border: #E3D8C4;
+    --shadow: 0 2px 10px rgba(35,71,57,0.08);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    display:flex;
+    min-height:100vh;
+  }
+  h1,h2,h3{ font-family: Georgia, "Times New Roman", serif; font-weight:600; }
+
+  /* Sidebar */
+  .sidebar{
+    width:230px;
+    background: var(--green);
+    color: var(--cream);
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .sidebar-header{
+    padding: 26px 22px 18px;
+    border-bottom: 1px solid rgba(245,235,220,0.15);
+  }
+  .sidebar-header h1{ font-size:1.4rem; letter-spacing:0.3px; }
+  .sidebar-header p{ font-size:0.72rem; color:#c9b89e; margin-top:4px; letter-spacing:0.5px; text-transform:uppercase; }
+  .nav{ flex:1; padding: 14px 10px; }
+  .nav button{
+    display:flex; align-items:center; gap:10px;
+    width:100%; text-align:left;
+    background:none; border:none; color:var(--cream);
+    padding:11px 14px; margin-bottom:4px; border-radius:8px;
+    font-size:0.92rem; cursor:pointer; opacity:0.82;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .nav button:hover{ background: rgba(245,235,220,0.08); opacity:1; }
+  .nav button.active{ background: var(--terracotta); opacity:1; font-weight:600; }
+  .nav-icon{ width:18px; text-align:center; }
+  .sidebar-footer{
+    padding: 16px 22px 20px;
+    border-top: 1px solid rgba(245,235,220,0.15);
+    font-size: 0.68rem;
+    color: var(--gold);
+    letter-spacing: 0.4px;
+    line-height:1.7;
+  }
+  .whoami{
+    padding: 12px 22px;
+    border-top: 1px solid rgba(245,235,220,0.15);
+  }
+  .whoami label{ font-size:0.68rem; color:#c9b89e; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px;}
+  .whoami select{
+    width:100%; padding:7px 8px; border-radius:6px; border:1px solid rgba(245,235,220,0.25);
+    background: rgba(245,235,220,0.08); color: var(--cream); font-size:0.85rem;
+  }
+  .whoami select option{ color: var(--ink); }
+
+  /* Main */
+  .main{ flex:1; padding: 34px 40px; max-width: 1180px; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+  .view-header{
+    display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:22px; flex-wrap:wrap; gap:12px;
+  }
+  .view-header h2{ font-size:1.5rem; color: var(--green); }
+  .view-header .sub{ color: var(--ink-soft); font-size:0.88rem; margin-top:3px; }
+
+  .btn{
+    border:none; border-radius:7px; padding:9px 16px; font-size:0.87rem; cursor:pointer;
+    font-weight:600; transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--terracotta); color:#fff; }
+  .btn-primary:hover{ opacity:0.9; }
+  .btn-ghost{ background: transparent; color: var(--green); border:1px solid var(--border); }
+  .btn-ghost:hover{ background: rgba(35,71,57,0.05); }
+  .btn-small{ padding:5px 10px; font-size:0.76rem; border-radius:6px; }
+  .btn-danger{ background:none; color:#b0402a; border:1px solid #e3c3b8; }
+
+  .toolbar{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center; }
+  .toolbar input[type=text], .toolbar select{
+    padding:8px 12px; border-radius:7px; border:1px solid var(--border);
+    background: var(--cream-card); font-size:0.85rem; color:var(--ink);
+  }
+  .toolbar input[type=text]{ min-width:220px; }
+
+  /* Dashboard */
+  .stat-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:16px; margin-bottom:30px; }
+  .stat-card{
+    background: var(--cream-card); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px; box-shadow: var(--shadow);
+  }
+  .stat-card .num{ font-family:Georgia,serif; font-size:2rem; color:var(--green); }
+  .stat-card .label{ font-size:0.78rem; color:var(--ink-soft); margin-top:2px; text-transform:uppercase; letter-spacing:0.4px;}
+  .dash-section{ margin-bottom:28px; }
+  .dash-section h3{ font-size:1.05rem; color:var(--green); margin-bottom:12px; }
+  .empty-state{
+    padding:28px; text-align:center; color: var(--ink-soft); background: var(--cream-card);
+    border:1px dashed var(--border); border-radius:12px; font-size:0.88rem;
+  }
+  .deadline-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; background:var(--cream-card); border:1px solid var(--border);
+    border-radius:8px; margin-bottom:8px; font-size:0.86rem;
+  }
+  .deadline-row .date{ color: var(--terracotta); font-weight:600; }
+
+  /* Cards / lists */
+  .card-list{ display:flex; flex-direction:column; gap:10px; }
+  .item-card{
+    background: var(--cream-card); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; box-shadow: var(--shadow);
+  }
+  .item-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+  .item-title{ font-weight:700; font-size:1rem; color: var(--ink); }
+  .item-meta{ font-size:0.8rem; color: var(--ink-soft); margin-top:3px; }
+  .item-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .item-notes{ font-size:0.84rem; color:var(--ink-soft); margin-top:10px; white-space:pre-wrap; }
+  .tags{ display:flex; gap:6px; flex-wrap:wrap; margin-top:9px; }
+  .tag{
+    background: rgba(198,134,46,0.15); color:#8a5c1e; font-size:0.73rem;
+    padding:3px 9px; border-radius:20px; font-weight:600;
+  }
+  .badge{
+    font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:20px;
+    display:inline-block;
+  }
+  .badge-tipo-GOLDIL{ background:#f0dcae; color:#7a5410; }
+  .badge-tipo-Formazione{ background:#e8d9cf; color:#8a3f1f; }
+  .badge-tipo-default{ background:#dbe6df; color:#234739; }
+  .badge-stato-DaAvviare{ background:#eee; color:#666; }
+  .badge-stato-InCorso{ background:#d9ead9; color:#2d6a2d; }
+  .badge-stato-Completato{ background:#dbe6df; color:#234739; }
+  .badge-stato-Sospeso{ background:#f3d6d0; color:#a13f2b; }
+  .badge-disp-Disponibile{ background:#d9ead9; color:#2d6a2d; }
+  .badge-disp-InColloquio{ background:#f0dcae; color:#7a5410; }
+  .badge-disp-NonDisponibile{ background:#eee; color:#777; }
+  .badge-disp-Collocato{ background:#dbe6df; color:#234739; }
+
+  /* Modal */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background: rgba(35,71,57,0.35);
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal{
+    background: var(--cream-card); border-radius:14px; padding:26px 28px;
+    width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+  .modal h3{ color: var(--green); margin-bottom:16px; font-size:1.2rem; }
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:0.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.3px;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:7px;
+    font-size:0.88rem; font-family:inherit; background:#fff; color:var(--ink);
+  }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+
+  .activity-log{ margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .activity-item{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    background:#fff; border:1px solid var(--border); border-radius:7px;
+    padding:7px 10px; font-size:0.82rem;
+  }
+  .activity-item .adate{ color:var(--terracotta); font-weight:700; flex-shrink:0; }
+  .activity-item .atext{ flex:1; color:var(--ink); }
+  .activity-item .aremove{ background:none; border:none; color:#b0402a; cursor:pointer; font-size:0.9rem; flex-shrink:0; }
+  .item-activity{ margin-top:10px; border-top:1px dashed var(--border); padding-top:10px; }
+  .item-activity .a-title{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); font-weight:700; margin-bottom:6px; }
+  .item-activity .a-row{ font-size:0.83rem; margin-bottom:4px; color:var(--ink); }
+  .item-activity .a-row .adate{ color:var(--terracotta); font-weight:700; margin-right:6px; }
+
+  .loading{ text-align:center; padding:40px; color:var(--ink-soft); }
+
+  @media (max-width: 760px){
+    body{ flex-direction:column; }
+    .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto; }
+    .sidebar-header, .sidebar-footer, .whoami{ display:none; }
+    .nav{ display:flex; padding:8px; }
+    .nav button{ white-space:nowrap; margin-bottom:0; }
+    .main{ padding:20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>Nysa Lab</h1>
+    <p>Gestionale</p>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">◈</span> Dashboard</button>
+    <button class="nav-btn" data-view="progetti"><span class="nav-icon">▤</span> Progetti</button>
+    <button class="nav-btn" data-view="contatti"><span class="nav-icon">◐</span> Contatti</button>
+    <button class="nav-btn" data-view="cv"><span class="nav-icon">◆</span> Archivio CV</button>
+  </div>
+  <div class="whoami">
+    <label>Chi sei</label>
+    <select id="whoamiSelect">
+      <option value="Ale">Ale</option>
+      <option value="Ilaria">Ilaria</option>
+      <option value="Umasha">Umasha</option>
+    </select>
+    <button type="button" id="openConfigBtn" style="margin-top:10px; width:100%; background:none; border:1px solid rgba(245,235,220,0.25); color:var(--cream); padding:6px; border-radius:6px; font-size:0.75rem; cursor:pointer;">⚙ Impostazioni</button>
+  </div>
+  <div class="sidebar-footer">accoglienza · crescita · rettitudine</div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="view-header">
+      <div>
+        <h2>Dashboard</h2>
+        <div class="sub">Il colpo d'occhio su Nysa Lab</div>
+      </div>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="dash-section">
+      <h3>Scadenze prossime (30 giorni)</h3>
+      <div id="dashDeadlines"></div>
+    </div>
+    <div class="dash-section">
+      <h3>Candidati disponibili</h3>
+      <div id="dashCandidati"></div>
+    </div>
+  </div>
+
+  <!-- PROGETTI -->
+  <div class="view" id="view-progetti">
+    <div class="view-header">
+      <div>
+        <h2>Progetti</h2>
+        <div class="sub">Formazione, GOL/DIL, Mentoring, Consulenza, Risorse Umane</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="exportProgetti">Esporta JSON</button>
+        <button class="btn btn-primary" id="openProgettoModal">+ Nuovo progetto</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="progettiSearch" placeholder="Cerca per nome, cliente, note...">
+      <select id="progettiFiltroTipo">
+        <option value="">Tutti i tipi</option>
+        <option>Formazione</option><option>GOL/DIL</option><option>Mentoring</option>
+        <option>Consulenza</option><option>Risorse Umane</option>
+      </select>
+      <select id="progettiFiltroStato">
+        <option value="">Tutti gli stati</option>
+        <option>Da avviare</option><option>In corso</option><option>Completato</option><option>Sospeso</option>
+      </select>
+    </div>
+    <div class="card-list" id="progettiList"></div>
+  </div>
+
+  <!-- CONTATTI -->
+  <div class="view" id="view-contatti">
+    <div class="view-header">
+      <div>
+        <h2>Contatti</h2>
+        <div class="sub">Aziende, privati, partner ed enti</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="exportContatti">Esporta JSON</button>
+        <button class="btn btn-primary" id="openContattoModal">+ Nuovo contatto</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="contattiSearch" placeholder="Cerca per nome, referente, note...">
+      <select id="contattiFiltroTipo">
+        <option value="">Tutti i tipi</option>
+        <option>Azienda</option><option>Privato</option><option>Partner</option><option>Ente Pubblico</option>
+      </select>
+    </div>
+    <div class="card-list" id="contattiList"></div>
+  </div>
+
+  <!-- CV -->
+  <div class="view" id="view-cv">
+    <div class="view-header">
+      <div>
+        <h2>Archivio CV</h2>
+        <div class="sub">Candidati e competenze, pronti per quando servono</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="exportCv">Esporta JSON</button>
+        <button class="btn btn-primary" id="openCvModal">+ Nuovo candidato</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="cvSearch" placeholder="Cerca per nome, competenza, settore...">
+      <select id="cvFiltroDisp">
+        <option value="">Tutte le disponibilità</option>
+        <option>Disponibile</option><option>In colloquio</option><option>Non disponibile</option><option>Collocato</option>
+      </select>
+    </div>
+    <div class="card-list" id="cvList"></div>
+  </div>
+
+</div>
+
+<!-- MODAL PROGETTO -->
+<div class="modal-overlay" id="modalProgetto">
+  <div class="modal">
+    <h3 id="progettoModalTitle">Nuovo progetto</h3>
+    <input type="hidden" id="progettoId">
+    <div class="field">
+      <label>Nome progetto</label>
+      <input type="text" id="pNome" placeholder="Es. Corso AI Base — Azienda XY">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Tipo</label>
+        <select id="pTipo">
+          <option>Formazione</option><option>GOL/DIL</option><option>Mentoring</option>
+          <option>Consulenza</option><option>Risorse Umane</option>
+        </select>
+      </div>
+      <div class="field" id="pPercorsoWrap" style="display:none;">
+        <label>Percorso DIL</label>
+        <select id="pPercorso">
+          <option>Reinserimento</option><option>Upskilling</option><option>Reskilling</option><option>Lavoro e Inclusione</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Cliente / Ente / Partner</label>
+      <input type="text" id="pCliente" placeholder="Nome cliente o ente">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Responsabile</label>
+        <select id="pResponsabile"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
+      </div>
+      <div class="field">
+        <label>Stato</label>
+        <select id="pStato"><option>Da avviare</option><option>In corso</option><option>Completato</option><option>Sospeso</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Data inizio</label>
+        <input type="date" id="pInizio">
+      </div>
+      <div class="field">
+        <label>Scadenza</label>
+        <input type="date" id="pScadenza">
+      </div>
+    </div>
+    <div class="field">
+      <label>Valore (€, opzionale)</label>
+      <input type="text" id="pValore" placeholder="Es. 3500">
+    </div>
+    <div class="field">
+      <label>Attività svolte</label>
+      <div class="field-row">
+        <input type="date" id="pAttivitaData" style="flex:0 0 150px;">
+        <input type="text" id="pAttivitaTesto" placeholder="Es. Inviato preventivo al cliente" style="flex:1;">
+        <button type="button" class="btn btn-small btn-ghost" id="addAttivitaBtn" style="flex:0 0 auto;">+ Aggiungi</button>
+      </div>
+      <div class="activity-log" id="pAttivitaList"></div>
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="pNote" placeholder="Dettagli, contatti coinvolti, prossimi passi..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalProgetto')">Annulla</button>
+      <button class="btn btn-primary" id="saveProgetto">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTATTO -->
+<div class="modal-overlay" id="modalContatto">
+  <div class="modal">
+    <h3 id="contattoModalTitle">Nuovo contatto</h3>
+    <input type="hidden" id="cId">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="cNome" placeholder="Nome azienda o persona">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Tipo</label>
+        <select id="cTipo"><option>Azienda</option><option>Privato</option><option>Partner</option><option>Ente Pubblico</option></select>
+      </div>
+      <div class="field">
+        <label>Referente</label>
+        <input type="text" id="cReferente" placeholder="Persona di contatto">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Email</label>
+        <input type="text" id="cEmail">
+      </div>
+      <div class="field">
+        <label>Telefono</label>
+        <input type="text" id="cTelefono">
+      </div>
+    </div>
+    <div class="field">
+      <label>Tag / interessi (separati da virgola)</label>
+      <input type="text" id="cTag" placeholder="Es. formazione AI, mentoring, GOL">
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="cNote" placeholder="Cronologia contatti, esigenze, opportunità..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalContatto')">Annulla</button>
+      <button class="btn btn-primary" id="saveContatto">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CV -->
+<div class="modal-overlay" id="modalCv">
+  <div class="modal">
+    <h3 id="cvModalTitle">Nuovo candidato</h3>
+    <input type="hidden" id="vId">
+    <div class="field">
+      <label>Nome candidato</label>
+      <input type="text" id="vNome">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Email</label>
+        <input type="text" id="vEmail">
+      </div>
+      <div class="field">
+        <label>Telefono</label>
+        <input type="text" id="vTelefono">
+      </div>
+    </div>
+    <div class="field">
+      <label>Competenze (separate da virgola)</label>
+      <input type="text" id="vCompetenze" placeholder="Es. Excel, formazione, HR, inglese B2">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Settore</label>
+        <input type="text" id="vSettore" placeholder="Es. Amministrazione">
+      </div>
+      <div class="field">
+        <label>Disponibilità</label>
+        <select id="vDisp"><option>Disponibile</option><option>In colloquio</option><option>Non disponibile</option><option>Collocato</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Provenienza (progetto/fonte)</label>
+      <input type="text" id="vFonte" placeholder="Es. Corso DIL Upskilling giugno 2026">
+    </div>
+    <div class="field">
+      <label>Link CV (Drive, opzionale)</label>
+      <input type="text" id="vLink" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="vNote"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalCv')">Annulla</button>
+      <button class="btn btn-primary" id="saveCv">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPOSTAZIONI -->
+<div class="modal-overlay" id="modalConfig">
+  <div class="modal">
+    <h3>Impostazioni — collegamento a Google Sheets</h3>
+    <p style="font-size:0.84rem; color:var(--ink-soft); margin-bottom:14px; line-height:1.5;">
+      Incolla qui l'URL del Web App di Apps Script (quello che finisce con <code>/exec</code>).
+      Va inserito una sola volta: da quel momento resta salvato per tutte e tre.
+    </p>
+    <div class="field">
+      <label>URL Web App</label>
+      <input type="text" id="configUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <div id="configStatus" style="font-size:0.82rem; margin-top:6px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="closeConfigBtn">Chiudi</button>
+      <button class="btn btn-primary" id="saveConfigBtn">Salva e collega</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let progetti = [];
+let contatti = [];
+let candidati = [];
+
+// ---------- backend config (URL salvato in localStorage del browser) ----------
+let backendUrl = null;
+const CONFIG_KEY = 'nysalab_backend_url';
+
+function getBackendUrl(){
+  try{ return localStorage.getItem(CONFIG_KEY); }catch(e){ return null; }
+}
+function setBackendUrl(url){
+  try{ localStorage.setItem(CONFIG_KEY, url); }catch(e){ /* browser senza storage: si potrà solo reinserire ad ogni apertura */ }
+}
+
+// ---------- Apps Script API ----------
+async function apiList(sheetKey){
+  const url = `${backendUrl}?action=list&sheet=${sheetKey}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if(json.error) throw new Error(json.error);
+  return json.data || [];
+}
+async function apiSave(sheetKey, data){
+  const res = await fetch(backendUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+    body: JSON.stringify({ action:'save', sheet: sheetKey, data })
+  });
+  const json = await res.json();
+  if(json.error) throw new Error(json.error);
+  return json;
+}
+async function apiDelete(sheetKey, id){
+  const res = await fetch(backendUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action:'delete', sheet: sheetKey, id })
+  });
+  const json = await res.json();
+  if(json.error) throw new Error(json.error);
+  return json;
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function whoami(){ return document.getElementById('whoamiSelect').value; }
+
+// ---------- nav ----------
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function openModalEl(id){ document.getElementById(id).classList.add('active'); }
+
+// ================= PROGETTI =================
+document.getElementById('pTipo').addEventListener('change', e=>{
+  document.getElementById('pPercorsoWrap').style.display = e.target.value === 'GOL/DIL' ? 'block':'none';
+});
+
+// ---- activity log (per-project diary) ----
+let modalAttivita = [];
+function renderModalAttivita(){
+  const el = document.getElementById('pAttivitaList');
+  const sorted = [...modalAttivita].sort((a,b)=> (b.data||'').localeCompare(a.data||''));
+  el.innerHTML = sorted.length ? sorted.map(a=>{
+    const idx = modalAttivita.indexOf(a);
+    return `<div class="activity-item">
+      <span class="adate">${esc(a.data||'—')}</span>
+      <span class="atext">${esc(a.testo)}</span>
+      <button type="button" class="aremove" onclick="removeModalAttivita(${idx})">✕</button>
+    </div>`;
+  }).join('') : '';
+}
+function removeModalAttivita(idx){
+  modalAttivita.splice(idx,1);
+  renderModalAttivita();
+}
+document.getElementById('addAttivitaBtn').addEventListener('click', ()=>{
+  const testo = document.getElementById('pAttivitaTesto').value.trim();
+  if(!testo){ return; }
+  const data = document.getElementById('pAttivitaData').value || new Date().toISOString().slice(0,10);
+  modalAttivita.push({ data, testo });
+  document.getElementById('pAttivitaTesto').value = '';
+  renderModalAttivita();
+});
+
+document.getElementById('openProgettoModal').addEventListener('click', ()=>{
+  document.getElementById('progettoModalTitle').textContent = 'Nuovo progetto';
+  document.getElementById('progettoId').value = '';
+  document.getElementById('pNome').value = '';
+  document.getElementById('pTipo').value = 'Formazione';
+  document.getElementById('pPercorsoWrap').style.display = 'none';
+  document.getElementById('pCliente').value = '';
+  document.getElementById('pResponsabile').value = whoami();
+  document.getElementById('pStato').value = 'Da avviare';
+  document.getElementById('pInizio').value = '';
+  document.getElementById('pScadenza').value = '';
+  document.getElementById('pValore').value = '';
+  document.getElementById('pNote').value = '';
+  document.getElementById('pAttivitaData').value = '';
+  document.getElementById('pAttivitaTesto').value = '';
+  modalAttivita = [];
+  renderModalAttivita();
+  openModalEl('modalProgetto');
+});
+
+document.getElementById('saveProgetto').addEventListener('click', async ()=>{
+  const id = document.getElementById('progettoId').value;
+  const nome = document.getElementById('pNome').value.trim();
+  if(!nome){ alert('Dai un nome al progetto.'); return; }
+  const obj = {
+    id: id || uid(),
+    nome,
+    tipo: document.getElementById('pTipo').value,
+    percorsoDIL: document.getElementById('pTipo').value === 'GOL/DIL' ? document.getElementById('pPercorso').value : '',
+    cliente: document.getElementById('pCliente').value.trim(),
+    responsabile: document.getElementById('pResponsabile').value,
+    stato: document.getElementById('pStato').value,
+    dataInizio: document.getElementById('pInizio').value,
+    dataScadenza: document.getElementById('pScadenza').value,
+    valore: document.getElementById('pValore').value.trim(),
+    note: document.getElementById('pNote').value.trim(),
+    attivita: [...modalAttivita],
+    aggiuntoDa: whoami()
+  };
+  if(id){
+    const idx = progetti.findIndex(p=>p.id===id);
+    if(idx>-1) progetti[idx] = obj;
+  } else {
+    progetti.push(obj);
+  }
+  try{
+    await apiSave('progetti', obj);
+  }catch(e){
+    alert('Errore di salvataggio sul foglio: ' + e.message);
+    return;
+  }
+  closeModal('modalProgetto');
+  renderProgetti();
+  renderDashboard();
+});
+
+function editProgetto(id){
+  const p = progetti.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('progettoModalTitle').textContent = 'Modifica progetto';
+  document.getElementById('progettoId').value = p.id;
+  document.getElementById('pNome').value = p.nome;
+  document.getElementById('pTipo').value = p.tipo;
+  document.getElementById('pPercorsoWrap').style.display = p.tipo==='GOL/DIL' ? 'block':'none';
+  if(p.percorsoDIL) document.getElementById('pPercorso').value = p.percorsoDIL;
+  document.getElementById('pCliente').value = p.cliente || '';
+  document.getElementById('pResponsabile').value = p.responsabile || 'Ale';
+  document.getElementById('pStato').value = p.stato || 'Da avviare';
+  document.getElementById('pInizio').value = p.dataInizio || '';
+  document.getElementById('pScadenza').value = p.dataScadenza || '';
+  document.getElementById('pValore').value = p.valore || '';
+  document.getElementById('pNote').value = p.note || '';
+  document.getElementById('pAttivitaData').value = '';
+  document.getElementById('pAttivitaTesto').value = '';
+  modalAttivita = p.attivita ? [...p.attivita] : [];
+  renderModalAttivita();
+  openModalEl('modalProgetto');
+}
+async function deleteProgetto(id){
+  if(!confirm('Eliminare questo progetto?')) return;
+  try{
+    await apiDelete('progetti', id);
+  }catch(e){
+    alert('Errore nell\'eliminazione: ' + e.message);
+    return;
+  }
+  progetti = progetti.filter(p=>p.id!==id);
+  renderProgetti(); renderDashboard();
+}
+
+function badgeTipoClass(tipo){
+  if(tipo==='GOL/DIL') return 'badge-tipo-GOLDIL';
+  if(tipo==='Formazione') return 'badge-tipo-Formazione';
+  return 'badge-tipo-default';
+}
+function badgeStatoClass(stato){
+  return 'badge-stato-' + stato.replace(/\s/g,'');
+}
+
+function renderProgetti(){
+  const search = document.getElementById('progettiSearch').value.toLowerCase();
+  const fTipo = document.getElementById('progettiFiltroTipo').value;
+  const fStato = document.getElementById('progettiFiltroStato').value;
+  let list = progetti.filter(p=>{
+    if(fTipo && p.tipo!==fTipo) return false;
+    if(fStato && p.stato!==fStato) return false;
+    if(search){
+      const attivitaText = (p.attivita||[]).map(a=>a.testo).join(' ');
+      const hay = (p.nome+' '+p.cliente+' '+p.note+' '+attivitaText).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  list.sort((a,b)=> (a.dataScadenza||'9999').localeCompare(b.dataScadenza||'9999'));
+  const container = document.getElementById('progettiList');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty-state">Nessun progetto trovato. Aggiungine uno per iniziare.</div>';
+    return;
+  }
+  container.innerHTML = list.map(p=>`
+    <div class="item-card">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${esc(p.nome)}</div>
+          <div class="item-meta">
+            <span class="badge ${badgeTipoClass(p.tipo)}">${esc(p.tipo)}${p.percorsoDIL ? ' · '+esc(p.percorsoDIL) : ''}</span>
+            <span class="badge ${badgeStatoClass(p.stato)}">${esc(p.stato)}</span>
+            ${p.cliente ? ' · '+esc(p.cliente) : ''} · Responsabile: ${esc(p.responsabile)}
+            ${p.dataScadenza ? ' · Scadenza: '+esc(p.dataScadenza) : ''}
+            ${p.valore ? ' · € '+esc(p.valore) : ''}
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-ghost" onclick="editProgetto('${p.id}')">Modifica</button>
+          <button class="btn btn-small btn-danger" onclick="deleteProgetto('${p.id}')">Elimina</button>
+        </div>
+      </div>
+      ${p.note ? `<div class="item-notes">${esc(p.note)}</div>` : ''}
+      ${(p.attivita && p.attivita.length) ? `
+        <div class="item-activity">
+          <div class="a-title">Attività recenti</div>
+          ${[...p.attivita].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).slice(0,4).map(a=>`
+            <div class="a-row"><span class="adate">${esc(a.data||'—')}</span>${esc(a.testo)}</div>
+          `).join('')}
+        </div>` : ''}
+    </div>
+  `).join('');
+}
+
+document.getElementById('progettiSearch').addEventListener('input', renderProgetti);
+document.getElementById('progettiFiltroTipo').addEventListener('change', renderProgetti);
+document.getElementById('progettiFiltroStato').addEventListener('change', renderProgetti);
+document.getElementById('exportProgetti').addEventListener('click', ()=>downloadJson(progetti,'progetti-nysalab.json'));
+
+// ================= CONTATTI =================
+document.getElementById('openContattoModal').addEventListener('click', ()=>{
+  document.getElementById('contattoModalTitle').textContent = 'Nuovo contatto';
+  document.getElementById('cId').value = '';
+  document.getElementById('cNome').value = '';
+  document.getElementById('cTipo').value = 'Azienda';
+  document.getElementById('cReferente').value = '';
+  document.getElementById('cEmail').value = '';
+  document.getElementById('cTelefono').value = '';
+  document.getElementById('cTag').value = '';
+  document.getElementById('cNote').value = '';
+  openModalEl('modalContatto');
+});
+
+document.getElementById('saveContatto').addEventListener('click', async ()=>{
+  const id = document.getElementById('cId').value;
+  const nome = document.getElementById('cNome').value.trim();
+  if(!nome){ alert('Dai un nome al contatto.'); return; }
+  const obj = {
+    id: id || uid(),
+    nome,
+    tipo: document.getElementById('cTipo').value,
+    referente: document.getElementById('cReferente').value.trim(),
+    email: document.getElementById('cEmail').value.trim(),
+    telefono: document.getElementById('cTelefono').value.trim(),
+    tag: document.getElementById('cTag').value.split(',').map(s=>s.trim()).filter(Boolean),
+    note: document.getElementById('cNote').value.trim(),
+    aggiuntoDa: whoami()
+  };
+  if(id){
+    const idx = contatti.findIndex(c=>c.id===id);
+    if(idx>-1) contatti[idx] = obj;
+  } else {
+    contatti.push(obj);
+  }
+  try{
+    await apiSave('contatti', obj);
+  }catch(e){
+    alert('Errore di salvataggio sul foglio: ' + e.message);
+    return;
+  }
+  closeModal('modalContatto');
+  renderContatti();
+  renderDashboard();
+});
+
+function editContatto(id){
+  const c = contatti.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('contattoModalTitle').textContent = 'Modifica contatto';
+  document.getElementById('cId').value = c.id;
+  document.getElementById('cNome').value = c.nome;
+  document.getElementById('cTipo').value = c.tipo;
+  document.getElementById('cReferente').value = c.referente || '';
+  document.getElementById('cEmail').value = c.email || '';
+  document.getElementById('cTelefono').value = c.telefono || '';
+  document.getElementById('cTag').value = (c.tag||[]).join(', ');
+  document.getElementById('cNote').value = c.note || '';
+  openModalEl('modalContatto');
+}
+async function deleteContatto(id){
+  if(!confirm('Eliminare questo contatto?')) return;
+  try{
+    await apiDelete('contatti', id);
+  }catch(e){
+    alert('Errore nell\'eliminazione: ' + e.message);
+    return;
+  }
+  contatti = contatti.filter(c=>c.id!==id);
+  renderContatti();
+}
+
+function renderContatti(){
+  const search = document.getElementById('contattiSearch').value.toLowerCase();
+  const fTipo = document.getElementById('contattiFiltroTipo').value;
+  let list = contatti.filter(c=>{
+    if(fTipo && c.tipo!==fTipo) return false;
+    if(search){
+      const hay = (c.nome+' '+c.referente+' '+c.note+' '+(c.tag||[]).join(' ')).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  list.sort((a,b)=>a.nome.localeCompare(b.nome));
+  const container = document.getElementById('contattiList');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty-state">Nessun contatto trovato. Aggiungine uno per iniziare.</div>';
+    return;
+  }
+  container.innerHTML = list.map(c=>`
+    <div class="item-card">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${esc(c.nome)}</div>
+          <div class="item-meta">
+            <span class="badge badge-tipo-default">${esc(c.tipo)}</span>
+            ${c.referente ? ' · '+esc(c.referente) : ''}
+            ${c.email ? ' · '+esc(c.email) : ''}
+            ${c.telefono ? ' · '+esc(c.telefono) : ''}
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-ghost" onclick="editContatto('${c.id}')">Modifica</button>
+          <button class="btn btn-small btn-danger" onclick="deleteContatto('${c.id}')">Elimina</button>
+        </div>
+      </div>
+      ${(c.tag&&c.tag.length) ? `<div class="tags">${c.tag.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+      ${c.note ? `<div class="item-notes">${esc(c.note)}</div>` : ''}
+    </div>
+  `).join('');
+}
+document.getElementById('contattiSearch').addEventListener('input', renderContatti);
+document.getElementById('contattiFiltroTipo').addEventListener('change', renderContatti);
+document.getElementById('exportContatti').addEventListener('click', ()=>downloadJson(contatti,'contatti-nysalab.json'));
+
+// ================= CV =================
+document.getElementById('openCvModal').addEventListener('click', ()=>{
+  document.getElementById('cvModalTitle').textContent = 'Nuovo candidato';
+  document.getElementById('vId').value = '';
+  document.getElementById('vNome').value = '';
+  document.getElementById('vEmail').value = '';
+  document.getElementById('vTelefono').value = '';
+  document.getElementById('vCompetenze').value = '';
+  document.getElementById('vSettore').value = '';
+  document.getElementById('vDisp').value = 'Disponibile';
+  document.getElementById('vFonte').value = '';
+  document.getElementById('vLink').value = '';
+  document.getElementById('vNote').value = '';
+  openModalEl('modalCv');
+});
+
+document.getElementById('saveCv').addEventListener('click', async ()=>{
+  const id = document.getElementById('vId').value;
+  const nome = document.getElementById('vNome').value.trim();
+  if(!nome){ alert('Dai un nome al candidato.'); return; }
+  const obj = {
+    id: id || uid(),
+    nome,
+    email: document.getElementById('vEmail').value.trim(),
+    telefono: document.getElementById('vTelefono').value.trim(),
+    competenze: document.getElementById('vCompetenze').value.split(',').map(s=>s.trim()).filter(Boolean),
+    settore: document.getElementById('vSettore').value.trim(),
+    disponibilita: document.getElementById('vDisp').value,
+    fonte: document.getElementById('vFonte').value.trim(),
+    link: document.getElementById('vLink').value.trim(),
+    note: document.getElementById('vNote').value.trim(),
+    aggiuntoDa: whoami()
+  };
+  if(id){
+    const idx = candidati.findIndex(v=>v.id===id);
+    if(idx>-1) candidati[idx] = obj;
+  } else {
+    candidati.push(obj);
+  }
+  try{
+    await apiSave('candidati', obj);
+  }catch(e){
+    alert('Errore di salvataggio sul foglio: ' + e.message);
+    return;
+  }
+  closeModal('modalCv');
+  renderCv();
+  renderDashboard();
+});
+
+function editCv(id){
+  const v = candidati.find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('cvModalTitle').textContent = 'Modifica candidato';
+  document.getElementById('vId').value = v.id;
+  document.getElementById('vNome').value = v.nome;
+  document.getElementById('vEmail').value = v.email || '';
+  document.getElementById('vTelefono').value = v.telefono || '';
+  document.getElementById('vCompetenze').value = (v.competenze||[]).join(', ');
+  document.getElementById('vSettore').value = v.settore || '';
+  document.getElementById('vDisp').value = v.disponibilita || 'Disponibile';
+  document.getElementById('vFonte').value = v.fonte || '';
+  document.getElementById('vLink').value = v.link || '';
+  document.getElementById('vNote').value = v.note || '';
+  openModalEl('modalCv');
+}
+async function deleteCv(id){
+  if(!confirm('Eliminare questo candidato?')) return;
+  try{
+    await apiDelete('candidati', id);
+  }catch(e){
+    alert('Errore nell\'eliminazione: ' + e.message);
+    return;
+  }
+  candidati = candidati.filter(v=>v.id!==id);
+  renderCv(); renderDashboard();
+}
+
+function badgeDispClass(d){ return 'badge-disp-' + d.replace(/\s/g,''); }
+
+function renderCv(){
+  const search = document.getElementById('cvSearch').value.toLowerCase();
+  const fDisp = document.getElementById('cvFiltroDisp').value;
+  let list = candidati.filter(v=>{
+    if(fDisp && v.disponibilita!==fDisp) return false;
+    if(search){
+      const hay = (v.nome+' '+v.settore+' '+v.note+' '+(v.competenze||[]).join(' ')).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  list.sort((a,b)=>a.nome.localeCompare(b.nome));
+  const container = document.getElementById('cvList');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty-state">Nessun candidato trovato. Aggiungine uno per iniziare.</div>';
+    return;
+  }
+  container.innerHTML = list.map(v=>`
+    <div class="item-card">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${esc(v.nome)}</div>
+          <div class="item-meta">
+            <span class="badge ${badgeDispClass(v.disponibilita)}">${esc(v.disponibilita)}</span>
+            ${v.settore ? ' · '+esc(v.settore) : ''}
+            ${v.email ? ' · '+esc(v.email) : ''}
+            ${v.telefono ? ' · '+esc(v.telefono) : ''}
+            ${v.fonte ? ' · da: '+esc(v.fonte) : ''}
+            ${v.link ? ` · <a href="${esc(v.link)}" target="_blank" style="color:var(--terracotta)">CV ↗</a>` : ''}
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-ghost" onclick="editCv('${v.id}')">Modifica</button>
+          <button class="btn btn-small btn-danger" onclick="deleteCv('${v.id}')">Elimina</button>
+        </div>
+      </div>
+      ${(v.competenze&&v.competenze.length) ? `<div class="tags">${v.competenze.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+      ${v.note ? `<div class="item-notes">${esc(v.note)}</div>` : ''}
+    </div>
+  `).join('');
+}
+document.getElementById('cvSearch').addEventListener('input', renderCv);
+document.getElementById('cvFiltroDisp').addEventListener('change', renderCv);
+document.getElementById('exportCv').addEventListener('click', ()=>downloadJson(candidati,'candidati-nysalab.json'));
+
+// ================= DASHBOARD =================
+function renderDashboard(){
+  const attivi = progetti.filter(p=>p.stato==='In corso').length;
+  const daAvviare = progetti.filter(p=>p.stato==='Da avviare').length;
+  const disponibili = candidati.filter(v=>v.disponibilita==='Disponibile').length;
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card"><div class="num">${progetti.length}</div><div class="label">Progetti totali</div></div>
+    <div class="stat-card"><div class="num">${attivi}</div><div class="label">In corso</div></div>
+    <div class="stat-card"><div class="num">${daAvviare}</div><div class="label">Da avviare</div></div>
+    <div class="stat-card"><div class="num">${contatti.length}</div><div class="label">Contatti</div></div>
+    <div class="stat-card"><div class="num">${disponibili}</div><div class="label">Candidati disponibili</div></div>
+  `;
+
+  const today = new Date();
+  const in30 = new Date(); in30.setDate(today.getDate()+30);
+  const upcoming = progetti.filter(p=>{
+    if(!p.dataScadenza) return false;
+    const d = new Date(p.dataScadenza);
+    return d >= today.setHours(0,0,0,0) && d <= in30 && p.stato !== 'Completato';
+  }).sort((a,b)=>a.dataScadenza.localeCompare(b.dataScadenza));
+
+  const dl = document.getElementById('dashDeadlines');
+  dl.innerHTML = upcoming.length ? upcoming.map(p=>`
+    <div class="deadline-row">
+      <span>${esc(p.nome)} <span class="badge ${badgeTipoClass(p.tipo)}" style="margin-left:6px;">${esc(p.tipo)}</span></span>
+      <span class="date">${esc(p.dataScadenza)}</span>
+    </div>
+  `).join('') : '<div class="empty-state">Nessuna scadenza nei prossimi 30 giorni.</div>';
+
+  const dispList = candidati.filter(v=>v.disponibilita==='Disponibile').slice(0,6);
+  const dc = document.getElementById('dashCandidati');
+  dc.innerHTML = dispList.length ? dispList.map(v=>`
+    <div class="deadline-row">
+      <span>${esc(v.nome)} ${v.settore ? '· '+esc(v.settore) : ''}</span>
+      <span>${(v.competenze||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join(' ')}</span>
+    </div>
+  `).join('') : '<div class="empty-state">Nessun candidato disponibile al momento.</div>';
+}
+
+// ---------- utils ----------
+function esc(str){
+  if(str===undefined || str===null) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function downloadJson(data, filename){
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('active'); });
+});
+
+// ---------- config modal ----------
+document.getElementById('openConfigBtn').addEventListener('click', async ()=>{
+  document.getElementById('configUrl').value = backendUrl || '';
+  document.getElementById('configStatus').textContent = '';
+  openModalEl('modalConfig');
+});
+document.getElementById('closeConfigBtn').addEventListener('click', ()=> closeModal('modalConfig'));
+document.getElementById('saveConfigBtn').addEventListener('click', async ()=>{
+  const url = document.getElementById('configUrl').value.trim();
+  const statusEl = document.getElementById('configStatus');
+  if(!url.includes('/exec')){
+    statusEl.style.color = '#b0402a';
+    statusEl.textContent = 'L\'URL dovrebbe finire con /exec — controlla di averlo copiato per intero.';
+    return;
+  }
+  statusEl.style.color = 'var(--ink-soft)';
+  statusEl.textContent = 'Verifica collegamento...';
+  backendUrl = url;
+  try{
+    await apiList('progetti'); // test di connessione
+    setBackendUrl(url);
+    statusEl.style.color = '#2d6a2d';
+    statusEl.textContent = 'Collegato! Ricarico i dati...';
+    await loadAllData();
+    setTimeout(()=> closeModal('modalConfig'), 700);
+  }catch(e){
+    statusEl.style.color = '#b0402a';
+    statusEl.textContent = 'Non riesco a collegarmi: verifica che il deployment sia "Anyone" e l\'URL corretto.';
+  }
+});
+
+async function loadAllData(){
+  try{
+    [progetti, contatti, candidati] = await Promise.all([
+      apiList('progetti'), apiList('contatti'), apiList('candidati')
+    ]);
+  }catch(e){
+    console.error(e);
+    alert('Errore nel caricare i dati dal foglio Google. Controlla il collegamento nelle Impostazioni.');
+    progetti = []; contatti = []; candidati = [];
+  }
+  renderDashboard();
+  renderProgetti();
+  renderContatti();
+  renderCv();
+}
+
+// ---------- init ----------
+async function init(){
+  backendUrl = getBackendUrl();
+  if(!backendUrl){
+    document.getElementById('configStatus').textContent = 'Nessun collegamento ancora configurato: incolla qui l\'URL del Web App.';
+    document.getElementById('configStatus').style.color = 'var(--ink-soft)';
+    openModalEl('modalConfig');
+    return;
+  }
+  await loadAllData();
+}
+init();
+</script>
+
+</body>
+</html>
