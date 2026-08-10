@@ -262,6 +262,8 @@
       </div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-ghost" id="exportProgetti">Esporta JSON</button>
+        <button class="btn btn-ghost" id="importProgettiBtn">Importa JSON</button>
+        <input type="file" id="importProgettiFile" accept="application/json" style="display:none;">
         <button class="btn btn-primary" id="openProgettoModal">+ Nuovo progetto</button>
       </div>
     </div>
@@ -289,6 +291,8 @@
       </div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-ghost" id="exportContatti">Esporta JSON</button>
+        <button class="btn btn-ghost" id="importContattiBtn">Importa JSON</button>
+        <input type="file" id="importContattiFile" accept="application/json" style="display:none;">
         <button class="btn btn-primary" id="openContattoModal">+ Nuovo contatto</button>
       </div>
     </div>
@@ -311,6 +315,8 @@
       </div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-ghost" id="exportCv">Esporta JSON</button>
+        <button class="btn btn-ghost" id="importCvBtn">Importa JSON</button>
+        <input type="file" id="importCvFile" accept="application/json" style="display:none;">
         <button class="btn btn-primary" id="openCvModal">+ Nuovo candidato</button>
       </div>
     </div>
@@ -1105,6 +1111,53 @@ async function loadAllData(){
   renderContatti();
   renderCv();
 }
+
+// ---------- import JSON (da vecchie esportazioni) ----------
+async function importJsonFile(file, sheetKey, existingList, idFieldCheck){
+  const text = await file.text();
+  let items;
+  try{ items = JSON.parse(text); }catch(e){ alert('File non valido: non sembra un JSON corretto.'); return null; }
+  if(!Array.isArray(items)){ alert('Il file deve contenere un elenco (array) di voci.'); return null; }
+  if(items.length === 0){ alert('Il file è vuoto, niente da importare.'); return null; }
+  if(!confirm(`Importare ${items.length} voci? Verranno aggiunte al foglio Google (eventuali id già esistenti verranno sovrascritti).`)) return null;
+  let ok = 0, fail = 0;
+  for(const item of items){
+    try{
+      if(!item.id) item.id = uid(); // sicurezza extra se manca l'id
+      await apiSave(sheetKey, item);
+      ok++;
+    }catch(e){ fail++; }
+  }
+  alert(`Importazione completata: ${ok} righe salvate${fail ? `, ${fail} fallite` : ''}.`);
+  return true;
+}
+
+document.getElementById('importProgettiBtn').addEventListener('click', ()=> document.getElementById('importProgettiFile').click());
+document.getElementById('importProgettiFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const done = await importJsonFile(file, 'progetti');
+  e.target.value = '';
+  if(done){ progetti = await apiList('progetti'); renderProgetti(); renderDashboard(); }
+});
+
+document.getElementById('importContattiBtn').addEventListener('click', ()=> document.getElementById('importContattiFile').click());
+document.getElementById('importContattiFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const done = await importJsonFile(file, 'contatti');
+  e.target.value = '';
+  if(done){ contatti = await apiList('contatti'); renderContatti(); renderDashboard(); }
+});
+
+document.getElementById('importCvBtn').addEventListener('click', ()=> document.getElementById('importCvFile').click());
+document.getElementById('importCvFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const done = await importJsonFile(file, 'candidati');
+  e.target.value = '';
+  if(done){ candidati = await apiList('candidati'); renderCv(); renderDashboard(); }
+});
 
 // ---------- init ----------
 async function init(){
