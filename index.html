@@ -158,6 +158,22 @@
   .badge-disp-NonDisponibile{ background:#eee; color:#777; }
   .badge-disp-Collocato{ background:#dbe6df; color:#234739; }
 
+  .todo-item{ display:flex; align-items:flex-start; gap:12px; }
+  .todo-check{
+    flex-shrink:0; width:22px; height:22px; border-radius:6px; border:2px solid var(--border);
+    background:#fff; cursor:pointer; margin-top:1px; display:flex; align-items:center; justify-content:center;
+    font-size:0.8rem; color:#fff; transition: background 0.12s, border-color 0.12s;
+  }
+  .todo-check.checked{ background: var(--green); border-color: var(--green); }
+  .todo-body{ flex:1; }
+  .todo-text{ font-weight:600; font-size:0.95rem; color:var(--ink); }
+  .todo-item.done .todo-text{ text-decoration: line-through; color: var(--ink-soft); font-weight:500; }
+  .todo-meta{ font-size:0.8rem; color:var(--ink-soft); margin-top:3px; }
+  .badge-persona{ background:#e3ddc8; color:#5c4f2e; font-weight:700; font-size:0.72rem; padding:3px 9px; border-radius:20px; }
+  .badge-persona-Ale{ background:#dbe6df; color:#234739; }
+  .badge-persona-Ilaria{ background:#e8d9cf; color:#8a3f1f; }
+  .badge-persona-Umasha{ background:#f0dcae; color:#7a5410; }
+
   /* Modal */
   .modal-overlay{
     display:none; position:fixed; inset:0; background: rgba(35,71,57,0.35);
@@ -219,6 +235,7 @@
     <button class="nav-btn" data-view="progetti"><span class="nav-icon">▤</span> Progetti</button>
     <button class="nav-btn" data-view="contatti"><span class="nav-icon">◐</span> Contatti</button>
     <button class="nav-btn" data-view="cv"><span class="nav-icon">◆</span> Archivio CV</button>
+    <button class="nav-btn" data-view="todo"><span class="nav-icon">☑</span> Da fare</button>
   </div>
   <div class="whoami">
     <label>Chi sei</label>
@@ -250,6 +267,10 @@
     <div class="dash-section">
       <h3>Candidati disponibili</h3>
       <div id="dashCandidati"></div>
+    </div>
+    <div class="dash-section">
+      <h3 id="dashTodoTitle">I tuoi prossimi impegni</h3>
+      <div id="dashTodo"></div>
     </div>
   </div>
 
@@ -328,6 +349,32 @@
       </select>
     </div>
     <div class="card-list" id="cvList"></div>
+  </div>
+
+  <!-- DA FARE -->
+  <div class="view" id="view-todo">
+    <div class="view-header">
+      <div>
+        <h2>Da fare</h2>
+        <div class="sub">La lista personale di ciascuna, tutta in un posto</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="exportTodo">Esporta JSON</button>
+        <button class="btn btn-ghost" id="importTodoBtn">Importa JSON</button>
+        <input type="file" id="importTodoFile" accept="application/json" style="display:none;">
+        <button class="btn btn-primary" id="openTodoModal">+ Nuovo da fare</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <select id="todoFiltroChi">
+        <option value="">Tutti</option>
+        <option>Ale</option><option>Ilaria</option><option>Umasha</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--ink-soft); cursor:pointer;">
+        <input type="checkbox" id="todoMostraCompletati" style="width:auto;"> Mostra completati
+      </label>
+    </div>
+    <div class="card-list" id="todoList"></div>
   </div>
 
 </div>
@@ -500,6 +547,40 @@
   </div>
 </div>
 
+<!-- MODAL DA FARE -->
+<div class="modal-overlay" id="modalTodo">
+  <div class="modal">
+    <h3 id="todoModalTitle">Nuovo da fare</h3>
+    <input type="hidden" id="tId">
+    <div class="field">
+      <label>Chi</label>
+      <select id="tResponsabile"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
+    </div>
+    <div class="field">
+      <label>Cosa</label>
+      <input type="text" id="tTesto" placeholder="Es. Chiamare Pippo per il preventivo">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="tData">
+      </div>
+      <div class="field">
+        <label>Ora (opzionale)</label>
+        <input type="time" id="tOra">
+      </div>
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="tNote" placeholder="Dettagli opzionali..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalTodo')">Annulla</button>
+      <button class="btn btn-primary" id="saveTodo">Salva</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPOSTAZIONI -->
 <div class="modal-overlay" id="modalConfig">
   <div class="modal">
@@ -524,6 +605,7 @@
 let progetti = [];
 let contatti = [];
 let candidati = [];
+let todos = [];
 
 // ---------- backend config (URL salvato in localStorage del browser) ----------
 let backendUrl = null;
@@ -1007,17 +1089,155 @@ document.getElementById('cvSearch').addEventListener('input', renderCv);
 document.getElementById('cvFiltroDisp').addEventListener('change', renderCv);
 document.getElementById('exportCv').addEventListener('click', ()=>downloadJson(candidati,'candidati-nysalab.json'));
 
+// ================= DA FARE =================
+document.getElementById('openTodoModal').addEventListener('click', ()=>{
+  document.getElementById('todoModalTitle').textContent = 'Nuovo da fare';
+  document.getElementById('tId').value = '';
+  document.getElementById('tResponsabile').value = whoami();
+  document.getElementById('tTesto').value = '';
+  document.getElementById('tData').value = '';
+  document.getElementById('tOra').value = '';
+  document.getElementById('tNote').value = '';
+  openModalEl('modalTodo');
+});
+
+document.getElementById('saveTodo').addEventListener('click', async ()=>{
+  const id = document.getElementById('tId').value;
+  const testo = document.getElementById('tTesto').value.trim();
+  if(!testo){ alert('Scrivi cosa c\'è da fare.'); return; }
+  const obj = {
+    id: id || uid(),
+    responsabile: document.getElementById('tResponsabile').value,
+    testo,
+    data: document.getElementById('tData').value,
+    ora: document.getElementById('tOra').value,
+    stato: (id && todos.find(t=>t.id===id)) ? todos.find(t=>t.id===id).stato : 'Da fare',
+    note: document.getElementById('tNote').value.trim(),
+    aggiuntoDa: whoami()
+  };
+  if(id){
+    const idx = todos.findIndex(t=>t.id===id);
+    if(idx>-1) obj.stato = todos[idx].stato; // preserva stato esistente
+    if(idx>-1) todos[idx] = obj;
+  } else {
+    todos.push(obj);
+  }
+  try{
+    await apiSave('todo', obj);
+  }catch(e){
+    alert('Errore di salvataggio sul foglio: ' + e.message);
+    return;
+  }
+  closeModal('modalTodo');
+  renderTodo();
+  renderDashboard();
+});
+
+function editTodo(id){
+  const t = todos.find(x=>x.id===id);
+  if(!t) return;
+  document.getElementById('todoModalTitle').textContent = 'Modifica da fare';
+  document.getElementById('tId').value = t.id;
+  document.getElementById('tResponsabile').value = t.responsabile || 'Ale';
+  document.getElementById('tTesto').value = t.testo;
+  document.getElementById('tData').value = t.data || '';
+  document.getElementById('tOra').value = t.ora || '';
+  document.getElementById('tNote').value = t.note || '';
+  openModalEl('modalTodo');
+}
+
+async function deleteTodo(id){
+  if(!confirm('Eliminare questo da fare?')) return;
+  try{
+    await apiDelete('todo', id);
+  }catch(e){
+    alert('Errore nell\'eliminazione: ' + e.message);
+    return;
+  }
+  todos = todos.filter(t=>t.id!==id);
+  renderTodo(); renderDashboard();
+}
+
+async function toggleTodoDone(id){
+  const t = todos.find(x=>x.id===id);
+  if(!t) return;
+  t.stato = (t.stato === 'Fatto') ? 'Da fare' : 'Fatto';
+  renderTodo(); // aggiorna subito, senza aspettare il salvataggio
+  try{
+    await apiSave('todo', t);
+  }catch(e){
+    alert('Errore di salvataggio: ' + e.message);
+  }
+  renderDashboard();
+}
+
+function renderTodo(){
+  const fChi = document.getElementById('todoFiltroChi').value;
+  const mostraCompletati = document.getElementById('todoMostraCompletati').checked;
+  let list = todos.filter(t=>{
+    if(fChi && t.responsabile !== fChi) return false;
+    if(!mostraCompletati && t.stato === 'Fatto') return false;
+    return true;
+  });
+  list.sort((a,b)=>{
+    if(a.stato !== b.stato) return a.stato === 'Fatto' ? 1 : -1;
+    return (a.data||'9999').localeCompare(b.data||'9999') || (a.ora||'99:99').localeCompare(b.ora||'99:99');
+  });
+  const container = document.getElementById('todoList');
+  if(list.length===0){
+    container.innerHTML = '<div class="empty-state">Nessun da fare qui. Aggiungine uno per iniziare.</div>';
+    return;
+  }
+  container.innerHTML = list.map(t=>{
+    const done = t.stato === 'Fatto';
+    const quando = [t.data, t.ora].filter(Boolean).join(' · ');
+    return `
+    <div class="item-card">
+      <div class="todo-item ${done ? 'done' : ''}">
+        <div class="todo-check ${done ? 'checked' : ''}" onclick="toggleTodoDone('${t.id}')">${done ? '✓' : ''}</div>
+        <div class="todo-body">
+          <div class="todo-text">${esc(t.testo)}</div>
+          <div class="todo-meta">
+            <span class="badge-persona badge-persona-${esc(t.responsabile)}">${esc(t.responsabile)}</span>
+            ${quando ? ' · '+esc(quando) : ''}
+          </div>
+          ${t.note ? `<div class="item-notes">${esc(t.note)}</div>` : ''}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-ghost" onclick="editTodo('${t.id}')">Modifica</button>
+          <button class="btn btn-small btn-danger" onclick="deleteTodo('${t.id}')">Elimina</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('todoFiltroChi').addEventListener('change', renderTodo);
+document.getElementById('todoMostraCompletati').addEventListener('change', renderTodo);
+document.getElementById('exportTodo').addEventListener('click', ()=>downloadJson(todos,'da-fare-nysalab.json'));
+document.getElementById('importTodoBtn').addEventListener('click', ()=> document.getElementById('importTodoFile').click());
+document.getElementById('importTodoFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const done = await importJsonFile(file, 'todo');
+  e.target.value = '';
+  if(done){ todos = await apiList('todo'); renderTodo(); renderDashboard(); }
+});
+// aggiorna la lista "da fare" quando si cambia "Chi sei" in sidebar, per la dashboard personalizzata
+document.getElementById('whoamiSelect').addEventListener('change', renderDashboard);
+
 // ================= DASHBOARD =================
 function renderDashboard(){
   const attivi = progetti.filter(p=>p.stato==='In corso').length;
   const daAvviare = progetti.filter(p=>p.stato==='Da avviare').length;
   const disponibili = candidati.filter(v=>v.disponibilita==='Disponibile').length;
+  const daFareAperti = todos.filter(t=>t.stato!=='Fatto').length;
   document.getElementById('statGrid').innerHTML = `
     <div class="stat-card"><div class="num">${progetti.length}</div><div class="label">Progetti totali</div></div>
     <div class="stat-card"><div class="num">${attivi}</div><div class="label">In corso</div></div>
     <div class="stat-card"><div class="num">${daAvviare}</div><div class="label">Da avviare</div></div>
     <div class="stat-card"><div class="num">${contatti.length}</div><div class="label">Contatti</div></div>
     <div class="stat-card"><div class="num">${disponibili}</div><div class="label">Candidati disponibili</div></div>
+    <div class="stat-card"><div class="num">${daFareAperti}</div><div class="label">Da fare aperti</div></div>
   `;
 
   const today = new Date();
@@ -1044,6 +1264,21 @@ function renderDashboard(){
       <span>${(v.competenze||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join(' ')}</span>
     </div>
   `).join('') : '<div class="empty-state">Nessun candidato disponibile al momento.</div>';
+
+  const chi = whoami();
+  document.getElementById('dashTodoTitle').textContent = `I prossimi impegni di ${chi}`;
+  const mieiTodo = todos.filter(t=>t.responsabile===chi && t.stato!=='Fatto')
+    .sort((a,b)=> (a.data||'9999').localeCompare(b.data||'9999') || (a.ora||'99:99').localeCompare(b.ora||'99:99'))
+    .slice(0,6);
+  const dt = document.getElementById('dashTodo');
+  dt.innerHTML = mieiTodo.length ? mieiTodo.map(t=>{
+    const quando = [t.data, t.ora].filter(Boolean).join(' · ');
+    return `
+    <div class="deadline-row">
+      <span>${esc(t.testo)}</span>
+      <span class="date">${esc(quando)}</span>
+    </div>`;
+  }).join('') : '<div class="empty-state">Nessun impegno aperto al momento.</div>';
 }
 
 // ---------- utils ----------
@@ -1098,18 +1333,19 @@ document.getElementById('saveConfigBtn').addEventListener('click', async ()=>{
 
 async function loadAllData(){
   try{
-    [progetti, contatti, candidati] = await Promise.all([
-      apiList('progetti'), apiList('contatti'), apiList('candidati')
+    [progetti, contatti, candidati, todos] = await Promise.all([
+      apiList('progetti'), apiList('contatti'), apiList('candidati'), apiList('todo')
     ]);
   }catch(e){
     console.error(e);
     alert('Errore nel caricare i dati dal foglio Google. Controlla il collegamento nelle Impostazioni.');
-    progetti = []; contatti = []; candidati = [];
+    progetti = []; contatti = []; candidati = []; todos = [];
   }
   renderDashboard();
   renderProgetti();
   renderContatti();
   renderCv();
+  renderTodo();
 }
 
 // ---------- import JSON (da vecchie esportazioni) ----------
