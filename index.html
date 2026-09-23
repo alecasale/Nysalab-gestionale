@@ -174,6 +174,12 @@
   .badge-persona-Ilaria{ background:#e8d9cf; color:#8a3f1f; }
   .badge-persona-Umasha{ background:#f0dcae; color:#7a5410; }
 
+  .badge-cstato-Dacontattare{ background:#eee; color:#666; }
+  .badge-cstato-Contattato{ background:#f0dcae; color:#7a5410; }
+  .badge-cstato-Intrattativa{ background:#cfe0f0; color:#1f4e79; }
+  .badge-cstato-Cliente{ background:#d9ead9; color:#2d6a2d; }
+  .badge-cstato-Partner{ background:#e0d4ec; color:#5c2d91; }
+
   /* Modal */
   .modal-overlay{
     display:none; position:fixed; inset:0; background: rgba(35,71,57,0.35);
@@ -265,6 +271,10 @@
       <div id="dashDeadlines"></div>
     </div>
     <div class="dash-section">
+      <h3>Prossime azioni CRM</h3>
+      <div id="dashCrmFollowup"></div>
+    </div>
+    <div class="dash-section">
       <h3>Candidati disponibili</h3>
       <div id="dashCandidati"></div>
     </div>
@@ -308,7 +318,7 @@
     <div class="view-header">
       <div>
         <h2>Contatti</h2>
-        <div class="sub">Aziende, privati, partner ed enti</div>
+        <div class="sub">Rete commerciale e di networking — clienti, partner, enti</div>
       </div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-ghost" id="exportContatti">Esporta JSON</button>
@@ -321,7 +331,17 @@
       <input type="text" id="contattiSearch" placeholder="Cerca per nome, referente, note...">
       <select id="contattiFiltroTipo">
         <option value="">Tutti i tipi</option>
-        <option>Azienda</option><option>Privato</option><option>Partner</option><option>Ente Pubblico</option>
+        <option>Azienda</option><option>Libero professionista</option><option>Ente pubblico</option>
+        <option>Partner potenziale</option><option>Ente formativo</option>
+      </select>
+      <select id="contattiFiltroStato">
+        <option value="">Tutti gli stati</option>
+        <option>Da contattare</option><option>Contattato</option><option>In trattativa</option>
+        <option>Cliente</option><option>Partner</option>
+      </select>
+      <select id="contattiFiltroOrigine">
+        <option value="">Tutte le origini</option>
+        <option>Ale</option><option>Ilaria</option><option>Umasha</option>
       </select>
     </div>
     <div class="card-list" id="contattiList"></div>
@@ -457,17 +477,34 @@
     <h3 id="contattoModalTitle">Nuovo contatto</h3>
     <input type="hidden" id="cId">
     <div class="field">
-      <label>Nome</label>
+      <label>Nome / Azienda</label>
       <input type="text" id="cNome" placeholder="Nome azienda o persona">
     </div>
     <div class="field-row">
       <div class="field">
         <label>Tipo</label>
-        <select id="cTipo"><option>Azienda</option><option>Privato</option><option>Partner</option><option>Ente Pubblico</option></select>
+        <select id="cTipo">
+          <option>Azienda</option><option>Libero professionista</option><option>Ente pubblico</option>
+          <option>Partner potenziale</option><option>Ente formativo</option>
+        </select>
       </div>
+      <div class="field">
+        <label>Settore</label>
+        <select id="cSettore">
+          <option value="">—</option>
+          <option>HR</option><option>Formazione</option><option>Tech</option><option>Sanità</option>
+          <option>PA</option><option>Finance</option><option>Altro</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
       <div class="field">
         <label>Referente</label>
         <input type="text" id="cReferente" placeholder="Persona di contatto">
+      </div>
+      <div class="field">
+        <label>Ruolo</label>
+        <input type="text" id="cRuolo" placeholder="Es. HR Manager">
       </div>
     </div>
     <div class="field-row">
@@ -480,9 +517,56 @@
         <input type="text" id="cTelefono">
       </div>
     </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Stato relazione</label>
+        <select id="cStato">
+          <option>Da contattare</option><option>Contattato</option><option>In trattativa</option>
+          <option>Cliente</option><option>Partner</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Canale</label>
+        <select id="cCanale">
+          <option value="">—</option>
+          <option>LinkedIn</option><option>Email</option><option>Telefono</option><option>Di persona</option><option>Evento</option>
+        </select>
+      </div>
+    </div>
     <div class="field">
-      <label>Tag / interessi (separati da virgola)</label>
-      <input type="text" id="cTag" placeholder="Es. formazione AI, mentoring, GOL">
+      <label>Interesse Nysa Lab</label>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; padding:8px 2px;">
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.83rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="cInteresse" value="Formazione" style="width:auto;"> Formazione</label>
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.83rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="cInteresse" value="HR Consulting" style="width:auto;"> HR Consulting</label>
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.83rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="cInteresse" value="Digital Skills" style="width:auto;"> Digital Skills</label>
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.83rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="cInteresse" value="Bandi & Finanziamenti" style="width:auto;"> Bandi & Finanziamenti</label>
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.83rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="cInteresse" value="Learning Journey" style="width:auto;"> Learning Journey</label>
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.83rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="cInteresse" value="Varie" style="width:auto;"> Varie</label>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Origine (chi ha portato il contatto)</label>
+        <select id="cOrigine"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
+      </div>
+      <div class="field">
+        <label>Ultimo contatto</label>
+        <input type="date" id="cUltimoContatto">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Prossima azione</label>
+        <input type="text" id="cProssimaAzione" placeholder="Es. Richiamare per preventivo">
+      </div>
+      <div class="field">
+        <label>Data prossima azione</label>
+        <input type="date" id="cDataProssimaAzione">
+      </div>
+    </div>
+    <div class="field">
+      <label>Tag liberi (separati da virgola)</label>
+      <input type="text" id="cTag" placeholder="Es. contatto caldo, ex collega">
     </div>
     <div class="field">
       <label>Note</label>
@@ -855,9 +939,18 @@ document.getElementById('openContattoModal').addEventListener('click', ()=>{
   document.getElementById('cId').value = '';
   document.getElementById('cNome').value = '';
   document.getElementById('cTipo').value = 'Azienda';
+  document.getElementById('cSettore').value = '';
   document.getElementById('cReferente').value = '';
+  document.getElementById('cRuolo').value = '';
   document.getElementById('cEmail').value = '';
   document.getElementById('cTelefono').value = '';
+  document.getElementById('cStato').value = 'Da contattare';
+  document.getElementById('cCanale').value = '';
+  document.querySelectorAll('.cInteresse').forEach(cb=>cb.checked=false);
+  document.getElementById('cOrigine').value = whoami();
+  document.getElementById('cUltimoContatto').value = '';
+  document.getElementById('cProssimaAzione').value = '';
+  document.getElementById('cDataProssimaAzione').value = '';
   document.getElementById('cTag').value = '';
   document.getElementById('cNote').value = '';
   openModalEl('modalContatto');
@@ -867,13 +960,23 @@ document.getElementById('saveContatto').addEventListener('click', async ()=>{
   const id = document.getElementById('cId').value;
   const nome = document.getElementById('cNome').value.trim();
   if(!nome){ alert('Dai un nome al contatto.'); return; }
+  const interesse = Array.from(document.querySelectorAll('.cInteresse:checked')).map(cb=>cb.value);
   const obj = {
     id: id || uid(),
     nome,
     tipo: document.getElementById('cTipo').value,
+    settore: document.getElementById('cSettore').value,
     referente: document.getElementById('cReferente').value.trim(),
+    ruolo: document.getElementById('cRuolo').value.trim(),
     email: document.getElementById('cEmail').value.trim(),
     telefono: document.getElementById('cTelefono').value.trim(),
+    stato: document.getElementById('cStato').value,
+    canale: document.getElementById('cCanale').value,
+    interesse,
+    origine: document.getElementById('cOrigine').value,
+    ultimoContatto: document.getElementById('cUltimoContatto').value,
+    prossimaAzione: document.getElementById('cProssimaAzione').value.trim(),
+    dataProssimaAzione: document.getElementById('cDataProssimaAzione').value,
     tag: document.getElementById('cTag').value.split(',').map(s=>s.trim()).filter(Boolean),
     note: document.getElementById('cNote').value.trim(),
     aggiuntoDa: whoami()
@@ -901,10 +1004,20 @@ function editContatto(id){
   document.getElementById('contattoModalTitle').textContent = 'Modifica contatto';
   document.getElementById('cId').value = c.id;
   document.getElementById('cNome').value = c.nome;
-  document.getElementById('cTipo').value = c.tipo;
+  document.getElementById('cTipo').value = c.tipo || 'Azienda';
+  document.getElementById('cSettore').value = c.settore || '';
   document.getElementById('cReferente').value = c.referente || '';
+  document.getElementById('cRuolo').value = c.ruolo || '';
   document.getElementById('cEmail').value = c.email || '';
   document.getElementById('cTelefono').value = c.telefono || '';
+  document.getElementById('cStato').value = c.stato || 'Da contattare';
+  document.getElementById('cCanale').value = c.canale || '';
+  const interessi = c.interesse || [];
+  document.querySelectorAll('.cInteresse').forEach(cb=>{ cb.checked = interessi.includes(cb.value); });
+  document.getElementById('cOrigine').value = c.origine || 'Ale';
+  document.getElementById('cUltimoContatto').value = c.ultimoContatto || '';
+  document.getElementById('cProssimaAzione').value = c.prossimaAzione || '';
+  document.getElementById('cDataProssimaAzione').value = c.dataProssimaAzione || '';
   document.getElementById('cTag').value = (c.tag||[]).join(', ');
   document.getElementById('cNote').value = c.note || '';
   openModalEl('modalContatto');
@@ -921,13 +1034,21 @@ async function deleteContatto(id){
   renderContatti();
 }
 
+function badgeContattoStatoClass(stato){
+  return 'badge-cstato-' + (stato||'').replace(/\s/g,'');
+}
+
 function renderContatti(){
   const search = document.getElementById('contattiSearch').value.toLowerCase();
   const fTipo = document.getElementById('contattiFiltroTipo').value;
+  const fStato = document.getElementById('contattiFiltroStato').value;
+  const fOrigine = document.getElementById('contattiFiltroOrigine').value;
   let list = contatti.filter(c=>{
     if(fTipo && c.tipo!==fTipo) return false;
+    if(fStato && c.stato!==fStato) return false;
+    if(fOrigine && c.origine!==fOrigine) return false;
     if(search){
-      const hay = (c.nome+' '+c.referente+' '+c.note+' '+(c.tag||[]).join(' ')).toLowerCase();
+      const hay = (c.nome+' '+c.referente+' '+c.ruolo+' '+c.note+' '+c.prossimaAzione+' '+(c.tag||[]).join(' ')+' '+(c.interesse||[]).join(' ')).toLowerCase();
       if(!hay.includes(search)) return false;
     }
     return true;
@@ -945,16 +1066,22 @@ function renderContatti(){
           <div class="item-title">${esc(c.nome)}</div>
           <div class="item-meta">
             <span class="badge badge-tipo-default">${esc(c.tipo)}</span>
-            ${c.referente ? ' · '+esc(c.referente) : ''}
+            ${c.stato ? `<span class="badge ${badgeContattoStatoClass(c.stato)}">${esc(c.stato)}</span>` : ''}
+            ${c.settore ? ' · '+esc(c.settore) : ''}
+            ${c.referente ? ' · '+esc(c.referente)+(c.ruolo ? ' ('+esc(c.ruolo)+')' : '') : ''}
             ${c.email ? ' · '+esc(c.email) : ''}
             ${c.telefono ? ' · '+esc(c.telefono) : ''}
+            ${c.canale ? ' · via '+esc(c.canale) : ''}
+            ${c.origine ? ' · portato da '+esc(c.origine) : ''}
           </div>
+          ${c.prossimaAzione ? `<div class="item-meta" style="margin-top:4px; color:var(--terracotta); font-weight:600;">→ ${esc(c.prossimaAzione)}${c.dataProssimaAzione ? ' · '+esc(c.dataProssimaAzione) : ''}</div>` : ''}
         </div>
         <div class="item-actions">
           <button class="btn btn-small btn-ghost" onclick="editContatto('${c.id}')">Modifica</button>
           <button class="btn btn-small btn-danger" onclick="deleteContatto('${c.id}')">Elimina</button>
         </div>
       </div>
+      ${(c.interesse&&c.interesse.length) ? `<div class="tags">${c.interesse.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       ${(c.tag&&c.tag.length) ? `<div class="tags">${c.tag.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       ${c.note ? `<div class="item-notes">${esc(c.note)}</div>` : ''}
     </div>
@@ -962,6 +1089,8 @@ function renderContatti(){
 }
 document.getElementById('contattiSearch').addEventListener('input', renderContatti);
 document.getElementById('contattiFiltroTipo').addEventListener('change', renderContatti);
+document.getElementById('contattiFiltroStato').addEventListener('change', renderContatti);
+document.getElementById('contattiFiltroOrigine').addEventListener('change', renderContatti);
 document.getElementById('exportContatti').addEventListener('click', ()=>downloadJson(contatti,'contatti-nysalab.json'));
 
 // ================= CV =================
@@ -1255,6 +1384,19 @@ function renderDashboard(){
       <span class="date">${esc(p.dataScadenza)}</span>
     </div>
   `).join('') : '<div class="empty-state">Nessuna scadenza nei prossimi 30 giorni.</div>';
+
+  const followup = contatti.filter(c=>{
+    if(!c.dataProssimaAzione) return false;
+    const d = new Date(c.dataProssimaAzione);
+    return d <= in30;
+  }).sort((a,b)=>a.dataProssimaAzione.localeCompare(b.dataProssimaAzione));
+  const dcrm = document.getElementById('dashCrmFollowup');
+  dcrm.innerHTML = followup.length ? followup.map(c=>`
+    <div class="deadline-row">
+      <span>${esc(c.nome)} ${c.prossimaAzione ? '— '+esc(c.prossimaAzione) : ''} ${c.stato ? `<span class="badge ${badgeContattoStatoClass(c.stato)}" style="margin-left:6px;">${esc(c.stato)}</span>` : ''}</span>
+      <span class="date">${esc(c.dataProssimaAzione)}</span>
+    </div>
+  `).join('') : '<div class="empty-state">Nessuna azione CRM in programma.</div>';
 
   const dispList = candidati.filter(v=>v.disponibilita==='Disponibile').slice(0,6);
   const dc = document.getElementById('dashCandidati');
