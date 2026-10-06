@@ -219,6 +219,15 @@
 
   .loading{ text-align:center; padding:40px; color:var(--ink-soft); }
 
+  .net-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:12px 16px; border-radius:10px; margin-bottom:18px; font-size:0.86rem; line-height:1.45;
+  }
+  .net-banner.hidden{ display:none; }
+  .net-banner.info{ background:#eef2ee; border:1px solid var(--border); color:var(--ink-soft); }
+  .net-banner.error{ background:#fbece7; border:1px solid #e3c3b8; color:#8a3f1f; }
+  .net-banner button{ flex-shrink:0; }
+
   @media (max-width: 760px){
     body{ flex-direction:column; }
     .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto; align-items:center; }
@@ -263,6 +272,8 @@
 </div>
 
 <div class="main">
+
+  <div id="netBanner" class="net-banner hidden"></div>
 
   <!-- DASHBOARD -->
   <div class="view active" id="view-dashboard">
@@ -709,33 +720,62 @@ function setBackendUrl(url){
   try{ localStorage.setItem(CONFIG_KEY, url); }catch(e){ /* browser senza storage: si potrà solo reinserire ad ogni apertura */ }
 }
 
-// ---------- Apps Script API ----------
+// ---------- Apps Script API (con timeout, nuovi tentativi e messaggi chiari) ----------
+const API_TIMEOUT_MS = 30000;   // oltre questo tempo la richiesta viene considerata persa
+const API_MAX_TRIES = 3;        // tentativi totali per ogni richiesta
+const API_RETRY_PAUSE_MS = 700; // pausa tra un tentativo e l'altro (cresce a ogni tentativo)
+const apiSleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Salvataggio e cancellazione sono sicuri da ripetere: lo script salva per id
+// (sovrascrive la stessa riga) e cancella per id (se non c'è più, non fa nulla).
+async function apiCall(url, options){
+  let lastErr = new Error('errore sconosciuto');
+  for(let attempt = 1; attempt <= API_MAX_TRIES; attempt++){
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), API_TIMEOUT_MS);
+    try{
+      const res = await fetch(url, Object.assign({}, options || {}, { signal: ctrl.signal }));
+      const text = await res.text();
+      let json;
+      try{ json = JSON.parse(text); }
+      catch(e){ throw new Error('Google ha risposto con una pagina di errore invece dei dati (codice ' + res.status + ')'); }
+      if(json && json.error){
+        // errore "vero" dello script (es. foglio mancante): inutile ritentare
+        const permanent = new Error(json.error);
+        permanent.permanent = true;
+        throw permanent;
+      }
+      return json;
+    }catch(e){
+      if(e.permanent) throw e;
+      if(e.name === 'AbortError') lastErr = new Error('il server non ha risposto entro ' + (API_TIMEOUT_MS/1000) + ' secondi');
+      else if(e instanceof TypeError) lastErr = new Error('la rete non ha lasciato passare la richiesta (' + e.message + ')');
+      else lastErr = e;
+      if(attempt < API_MAX_TRIES) await apiSleep(API_RETRY_PAUSE_MS * attempt);
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr;
+}
+
 async function apiList(sheetKey){
-  const url = `${backendUrl}?action=list&sheet=${sheetKey}`;
-  const res = await fetch(url);
-  const json = await res.json();
-  if(json.error) throw new Error(json.error);
+  const json = await apiCall(`${backendUrl}?action=list&sheet=${sheetKey}`);
   return json.data || [];
 }
 async function apiSave(sheetKey, data){
-  const res = await fetch(backendUrl, {
+  return apiCall(backendUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
     body: JSON.stringify({ action:'save', sheet: sheetKey, data })
   });
-  const json = await res.json();
-  if(json.error) throw new Error(json.error);
-  return json;
 }
 async function apiDelete(sheetKey, id){
-  const res = await fetch(backendUrl, {
+  return apiCall(backendUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action:'delete', sheet: sheetKey, id })
   });
-  const json = await res.json();
-  if(json.error) throw new Error(json.error);
-  return json;
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1476,25 +1516,52 @@ document.getElementById('saveConfigBtn').addEventListener('click', async ()=>{
     setTimeout(()=> closeModal('modalConfig'), 700);
   }catch(e){
     statusEl.style.color = '#b0402a';
-    statusEl.textContent = 'Non riesco a collegarmi: verifica che il deployment sia "Anyone" e l\'URL corretto.';
+    statusEl.textContent = 'Non riesco a collegarmi: ' + e.message + '. Controlla che l\'URL sia corretto e il deployment su "Chiunque".';
   }
 });
 
+// ---------- avviso di caricamento / errore di rete ----------
+function showBanner(html, kind, withRetry){
+  const el = document.getElementById('netBanner');
+  el.className = 'net-banner ' + (kind || 'info');
+  el.innerHTML = `<span>${html}</span>` + (withRetry ? '<button class="btn btn-small btn-primary" id="netRetryBtn">Riprova</button>' : '');
+  if(withRetry) document.getElementById('netRetryBtn').addEventListener('click', loadAllData);
+}
+function hideBanner(){
+  const el = document.getElementById('netBanner');
+  el.className = 'net-banner hidden';
+  el.innerHTML = '';
+}
+
 async function loadAllData(){
-  try{
-    [progetti, contatti, candidati, todos] = await Promise.all([
-      apiList('progetti'), apiList('contatti'), apiList('candidati'), apiList('todo')
-    ]);
-  }catch(e){
-    console.error(e);
-    alert('Errore nel caricare i dati dal foglio Google. Controlla il collegamento nelle Impostazioni.');
-    progetti = []; contatti = []; candidati = []; todos = [];
+  const sezioni = [
+    { key:'progetti',  label:'Progetti',    set: v => { progetti = v; } },
+    { key:'contatti',  label:'Contatti',    set: v => { contatti = v; } },
+    { key:'candidati', label:'Archivio CV', set: v => { candidati = v; } },
+    { key:'todo',      label:'Da fare',     set: v => { todos = v; } }
+  ];
+  showBanner('Carico i dati dal foglio Google…', 'info', false);
+  const falliti = [];
+  for(const s of sezioni){
+    try{
+      s.set(await apiList(s.key));
+    }catch(e){
+      console.error('Errore su', s.key, e);
+      falliti.push({ label: s.label, motivo: e.message });
+    }
+    // mostro subito quello che è arrivato, senza aspettare gli altri
+    renderDashboard(); renderProgetti(); renderContatti(); renderCv(); renderTodo();
   }
-  renderDashboard();
-  renderProgetti();
-  renderContatti();
-  renderCv();
-  renderTodo();
+  if(falliti.length === 0){
+    hideBanner();
+  }else{
+    const elenco = falliti.map(f => esc(f.label)).join(', ');
+    showBanner(
+      `<strong>Non sono riuscito a caricare: ${elenco}.</strong> I dati nel foglio non sono stati toccati: è un problema di collegamento. ` +
+      `<span style="opacity:0.8">Dettaglio: ${esc(falliti[0].motivo)}.</span>`,
+      'error', true
+    );
+  }
 }
 
 // ---------- import JSON (da vecchie esportazioni) ----------
