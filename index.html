@@ -180,6 +180,18 @@
   .badge-cstato-Cliente{ background:#d9ead9; color:#2d6a2d; }
   .badge-cstato-Partner{ background:#e0d4ec; color:#5c2d91; }
 
+  .badge-ev-Formazione{ background:#d9ead9; color:#2d6a2d; }
+  .badge-ev-Tecnologiaeinnovazione{ background:#cfe0f0; color:#1f4e79; }
+  .badge-ev-Gestioneaziendale{ background:#f0dcae; color:#7a5410; }
+  .badge-ev-HR{ background:#e0d4ec; color:#5c2d91; }
+  .badge-ev-default{ background:#eee; color:#666; }
+  .badge-ev-iscr-Dadecidere{ background:#eee; color:#666; }
+  .badge-ev-iscr-Daiscrivere{ background:#f0dcae; color:#7a5410; }
+  .badge-ev-iscr-Iscritto{ background:#d9ead9; color:#2d6a2d; }
+  .badge-ev-iscr-Partecipato{ background:#dbe6df; color:#234739; }
+  .badge-ev-iscr-Nonpartecipiamo{ background:#f3d6d0; color:#a13f2b; }
+  .item-link a{ color: var(--green); font-weight:600; font-size:0.83rem; }
+
   /* Modal */
   .modal-overlay{
     display:none; position:fixed; inset:0; background: rgba(35,71,57,0.35);
@@ -258,12 +270,12 @@
     <button class="nav-btn" data-view="contatti"><span class="nav-icon">◐</span> Contatti</button>
     <button class="nav-btn" data-view="cv"><span class="nav-icon">◆</span> Archivio CV</button>
     <button class="nav-btn" data-view="todo"><span class="nav-icon">☑</span> Da fare</button>
+    <button class="nav-btn" data-view="eventi"><span class="nav-icon">◷</span> Eventi</button>
   </div>
   <div class="whoami">
     <label>Chi sei</label>
     <select id="whoamiSelect">
       <option value="Ale">Ale</option>
-      <option value="Ilaria">Ilaria</option>
       <option value="Umasha">Umasha</option>
     </select>
     <button type="button" id="openConfigBtn" style="margin-top:10px; width:100%; background:none; border:1px solid rgba(245,235,220,0.25); color:var(--cream); padding:6px; border-radius:6px; font-size:0.75rem; cursor:pointer;">⚙ Impostazioni</button>
@@ -291,6 +303,10 @@
     <div class="dash-section">
       <h3>Prossime azioni CRM</h3>
       <div id="dashCrmFollowup"></div>
+    </div>
+    <div class="dash-section">
+      <h3>Prossimi eventi</h3>
+      <div id="dashEventi"></div>
     </div>
     <div class="dash-section">
       <h3>Candidati disponibili</h3>
@@ -359,7 +375,7 @@
       </select>
       <select id="contattiFiltroOrigine">
         <option value="">Tutte le origini</option>
-        <option>Ale</option><option>Ilaria</option><option>Umasha</option>
+        <option>Ale</option><option>Umasha</option>
       </select>
     </div>
     <div class="card-list" id="contattiList"></div>
@@ -406,13 +422,50 @@
     <div class="toolbar">
       <select id="todoFiltroChi">
         <option value="">Tutti</option>
-        <option>Ale</option><option>Ilaria</option><option>Umasha</option>
+        <option>Ale</option><option>Umasha</option>
       </select>
       <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--ink-soft); cursor:pointer;">
         <input type="checkbox" id="todoMostraCompletati" style="width:auto;"> Mostra completati
       </label>
     </div>
     <div class="card-list" id="todoList"></div>
+  </div>
+
+  <!-- EVENTI -->
+  <div class="view" id="view-eventi">
+    <div class="view-header">
+      <div>
+        <h2>Eventi</h2>
+        <div class="sub">Eventi di formazione, tecnologia, gestione aziendale e HR per fare contatti</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="exportEventi">Esporta JSON</button>
+        <button class="btn btn-ghost" id="importEventiBtn">Importa JSON</button>
+        <input type="file" id="importEventiFile" accept="application/json" style="display:none;">
+        <button class="btn btn-primary" id="openEventoModal">+ Nuovo evento</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="eventiSearch" placeholder="Cerca per nome, luogo, organizzatore, note...">
+      <select id="eventiFiltroCategoria">
+        <option value="">Tutte le categorie</option>
+        <option>Formazione</option><option>Tecnologia e innovazione</option>
+        <option>Gestione aziendale</option><option>HR</option>
+      </select>
+      <select id="eventiFiltroIscrizione">
+        <option value="">Tutte le iscrizioni</option>
+        <option>Da decidere</option><option>Da iscrivere</option><option>Iscritto</option>
+        <option>Partecipato</option><option>Non partecipiamo</option>
+      </select>
+      <select id="eventiOrdina">
+        <option value="priorita">Ordina per priorità</option>
+        <option value="data">Ordina per data</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--ink-soft); cursor:pointer;">
+        <input type="checkbox" id="eventiMostraPassati" style="width:auto;"> Mostra passati
+      </label>
+    </div>
+    <div class="card-list" id="eventiList"></div>
   </div>
 
 </div>
@@ -448,7 +501,7 @@
     <div class="field-row">
       <div class="field">
         <label>Responsabile</label>
-        <select id="pResponsabile"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
+        <select id="pResponsabile"><option>Ale</option><option>Umasha</option></select>
       </div>
       <div class="field">
         <label>Stato</label>
@@ -565,7 +618,7 @@
     <div class="field-row">
       <div class="field">
         <label>Origine (chi ha portato il contatto)</label>
-        <select id="cOrigine"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
+        <select id="cOrigine"><option>Ale</option><option>Umasha</option></select>
       </div>
       <div class="field">
         <label>Ultimo contatto</label>
@@ -656,7 +709,7 @@
     <input type="hidden" id="tId">
     <div class="field">
       <label>Chi</label>
-      <select id="tResponsabile"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
+      <select id="tResponsabile"><option>Ale</option><option>Umasha</option></select>
     </div>
     <div class="field">
       <label>Cosa</label>
@@ -683,13 +736,104 @@
   </div>
 </div>
 
+<!-- MODAL EVENTO -->
+<div class="modal-overlay" id="modalEvento">
+  <div class="modal">
+    <h3 id="eventoModalTitle">Nuovo evento</h3>
+    <input type="hidden" id="eId">
+    <div class="field">
+      <label>Nome evento</label>
+      <input type="text" id="eNome" placeholder="Es. SMAU Milano 2026">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Categoria</label>
+        <select id="eCategoria">
+          <option>Formazione</option><option>Tecnologia e innovazione</option>
+          <option>Gestione aziendale</option><option>HR</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Stato data</label>
+        <select id="eStatoData">
+          <option>Confermata</option><option>Da verificare</option><option>Da monitorare</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Data inizio</label>
+        <input type="date" id="eDataInizio">
+      </div>
+      <div class="field">
+        <label>Data fine</label>
+        <input type="date" id="eDataFine">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Orario</label>
+        <input type="text" id="eOrario" placeholder="Es. 9:30-17:00">
+      </div>
+      <div class="field">
+        <label>Costo / accesso</label>
+        <input type="text" id="eCosto" placeholder="Es. Gratuito con registrazione">
+      </div>
+    </div>
+    <div class="field">
+      <label>Luogo</label>
+      <input type="text" id="eLuogo" placeholder="Es. Allianz MiCo, Milano">
+    </div>
+    <div class="field">
+      <label>Organizzatore</label>
+      <input type="text" id="eOrganizzatore">
+    </div>
+    <div class="field">
+      <label>Perché ci interessa</label>
+      <textarea id="ePerche" placeholder="Che contatti o temi ci porta..."></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Iscrizione</label>
+        <select id="eIscrizione">
+          <option>Da decidere</option><option>Da iscrivere</option><option>Iscritto</option>
+          <option>Partecipato</option><option>Non partecipiamo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Chi partecipa</label>
+        <div style="display:flex; gap:14px; padding-top:7px;">
+          <label style="display:flex; align-items:center; gap:5px; font-size:0.85rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="eChi" value="Ale" style="width:auto;"> Ale</label>
+          <label style="display:flex; align-items:center; gap:5px; font-size:0.85rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="eChi" value="Umasha" style="width:auto;"> Umasha</label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Prossima azione</label>
+      <input type="text" id="eProssimaAzione" placeholder="Es. Verificare la data e iscriversi">
+    </div>
+    <div class="field">
+      <label>Link</label>
+      <input type="text" id="eLink" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="eNote"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalEvento')">Annulla</button>
+      <button class="btn btn-primary" id="saveEvento">Salva</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPOSTAZIONI -->
 <div class="modal-overlay" id="modalConfig">
   <div class="modal">
     <h3>Impostazioni — collegamento a Google Sheets</h3>
     <p style="font-size:0.84rem; color:var(--ink-soft); margin-bottom:14px; line-height:1.5;">
       Incolla qui l'URL del Web App di Apps Script (quello che finisce con <code>/exec</code>).
-      Va inserito una sola volta: da quel momento resta salvato per tutte e tre.
+      Va inserito una sola volta: da quel momento resta salvato su questo dispositivo.
     </p>
     <div class="field">
       <label>URL Web App</label>
@@ -708,6 +852,7 @@ let progetti = [];
 let contatti = [];
 let candidati = [];
 let todos = [];
+let eventi = [];
 
 // ---------- backend config (URL salvato in localStorage del browser) ----------
 let backendUrl = null;
@@ -780,6 +925,16 @@ async function apiDelete(sheetKey, id){
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function whoami(){ return document.getElementById('whoamiSelect').value; }
+// Imposta un menu a tendina; se il valore salvato non è più tra le opzioni (es. un vecchio
+// record con un nome non più nei menu) lo aggiunge, così modificando il record non va perso.
+function setSelectValue(id, value, fallback){
+  const sel = document.getElementById(id);
+  const v = value || fallback;
+  if(v && !Array.from(sel.options).some(o=>o.value===v)){
+    const o = document.createElement('option'); o.textContent = v; o.value = v; sel.appendChild(o);
+  }
+  sel.value = v;
+}
 
 // ---------- nav ----------
 document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -892,7 +1047,7 @@ function editProgetto(id){
   document.getElementById('pPercorsoWrap').style.display = p.tipo==='GOL/DIL' ? 'block':'none';
   if(p.percorsoDIL) document.getElementById('pPercorso').value = p.percorsoDIL;
   document.getElementById('pCliente').value = p.cliente || '';
-  document.getElementById('pResponsabile').value = p.responsabile || 'Ale';
+  setSelectValue('pResponsabile', p.responsabile, 'Ale');
   document.getElementById('pStato').value = p.stato || 'Da avviare';
   document.getElementById('pInizio').value = p.dataInizio || '';
   document.getElementById('pScadenza').value = p.dataScadenza || '';
@@ -1061,7 +1216,7 @@ function editContatto(id){
   document.getElementById('cCanale').value = c.canale || '';
   const interessi = c.interesse || [];
   document.querySelectorAll('.cInteresse').forEach(cb=>{ cb.checked = interessi.includes(cb.value); });
-  document.getElementById('cOrigine').value = c.origine || 'Ale';
+  setSelectValue('cOrigine', c.origine, 'Ale');
   document.getElementById('cUltimoContatto').value = c.ultimoContatto || '';
   document.getElementById('cProssimaAzione').value = c.prossimaAzione || '';
   document.getElementById('cDataProssimaAzione').value = c.dataProssimaAzione || '';
@@ -1314,7 +1469,7 @@ function editTodo(id){
   if(!t) return;
   document.getElementById('todoModalTitle').textContent = 'Modifica da fare';
   document.getElementById('tId').value = t.id;
-  document.getElementById('tResponsabile').value = t.responsabile || 'Ale';
+  setSelectValue('tResponsabile', t.responsabile, 'Ale');
   document.getElementById('tTesto').value = t.testo;
   document.getElementById('tData').value = t.data || '';
   document.getElementById('tOra').value = t.ora || '';
@@ -1401,12 +1556,210 @@ document.getElementById('importTodoFile').addEventListener('change', async (e)=>
 // aggiorna la lista "da fare" quando si cambia "Chi sei" in sidebar, per la dashboard personalizzata
 document.getElementById('whoamiSelect').addEventListener('change', renderDashboard);
 
+// ================= EVENTI =================
+const EV_CAT_ORDER = { 'Formazione':1, 'Tecnologia e innovazione':2, 'Gestione aziendale':3, 'HR':4 };
+
+function oggiISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function isEventoPassato(e){
+  const fine = e.dataFine || e.dataInizio;
+  return !!fine && String(fine) < oggiISO();
+}
+function isEventoFuturo(e){ return !!e.dataInizio && !isEventoPassato(e); }
+function quandoEvento(e){
+  if(!e.dataInizio) return '';
+  return (e.dataFine && e.dataFine !== e.dataInizio) ? e.dataInizio + ' → ' + e.dataFine : e.dataInizio;
+}
+function evCatClass(cat){
+  const k = String(cat||'').replace(/[^A-Za-z]/g,'');
+  return k ? 'badge-ev-' + k : 'badge-ev-default';
+}
+function evIscrClass(v){
+  return 'badge-ev-iscr-' + String(v||'').replace(/[^A-Za-z]/g,'');
+}
+
+document.getElementById('openEventoModal').addEventListener('click', ()=>{
+  document.getElementById('eventoModalTitle').textContent = 'Nuovo evento';
+  document.getElementById('eId').value = '';
+  document.getElementById('eNome').value = '';
+  document.getElementById('eCategoria').value = 'Formazione';
+  document.getElementById('eStatoData').value = 'Da verificare';
+  document.getElementById('eDataInizio').value = '';
+  document.getElementById('eDataFine').value = '';
+  document.getElementById('eOrario').value = '';
+  document.getElementById('eCosto').value = '';
+  document.getElementById('eLuogo').value = '';
+  document.getElementById('eOrganizzatore').value = '';
+  document.getElementById('ePerche').value = '';
+  document.getElementById('eIscrizione').value = 'Da decidere';
+  document.querySelectorAll('.eChi').forEach(cb=>cb.checked=false);
+  document.getElementById('eProssimaAzione').value = '';
+  document.getElementById('eLink').value = '';
+  document.getElementById('eNote').value = '';
+  openModalEl('modalEvento');
+});
+
+document.getElementById('saveEvento').addEventListener('click', async ()=>{
+  const id = document.getElementById('eId').value;
+  const nome = document.getElementById('eNome').value.trim();
+  if(!nome){ alert('Dai un nome all\'evento.'); return; }
+  const obj = {
+    id: id || uid(),
+    categoria: document.getElementById('eCategoria').value,
+    nome,
+    dataInizio: document.getElementById('eDataInizio').value,
+    dataFine: document.getElementById('eDataFine').value,
+    orario: document.getElementById('eOrario').value.trim(),
+    luogo: document.getElementById('eLuogo').value.trim(),
+    organizzatore: document.getElementById('eOrganizzatore').value.trim(),
+    costo: document.getElementById('eCosto').value.trim(),
+    statoData: document.getElementById('eStatoData').value,
+    perche: document.getElementById('ePerche').value.trim(),
+    prossimaAzione: document.getElementById('eProssimaAzione').value.trim(),
+    link: document.getElementById('eLink').value.trim(),
+    iscrizione: document.getElementById('eIscrizione').value,
+    chiPartecipa: Array.from(document.querySelectorAll('.eChi:checked')).map(cb=>cb.value),
+    note: document.getElementById('eNote').value.trim(),
+    aggiuntoDa: whoami()
+  };
+  if(id){
+    const idx = eventi.findIndex(x=>x.id===id);
+    if(idx>-1) eventi[idx] = obj;
+  } else {
+    eventi.push(obj);
+  }
+  try{
+    await apiSave('eventi', obj);
+  }catch(e){
+    alert('Errore di salvataggio sul foglio: ' + e.message);
+    return;
+  }
+  closeModal('modalEvento');
+  renderEventi();
+  renderDashboard();
+});
+
+function editEvento(id){
+  const e = eventi.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById('eventoModalTitle').textContent = 'Modifica evento';
+  document.getElementById('eId').value = e.id;
+  document.getElementById('eNome').value = e.nome || '';
+  document.getElementById('eCategoria').value = e.categoria || 'Formazione';
+  document.getElementById('eStatoData').value = e.statoData || 'Da verificare';
+  document.getElementById('eDataInizio').value = e.dataInizio || '';
+  document.getElementById('eDataFine').value = e.dataFine || '';
+  document.getElementById('eOrario').value = e.orario || '';
+  document.getElementById('eCosto').value = e.costo || '';
+  document.getElementById('eLuogo').value = e.luogo || '';
+  document.getElementById('eOrganizzatore').value = e.organizzatore || '';
+  document.getElementById('ePerche').value = e.perche || '';
+  document.getElementById('eIscrizione').value = e.iscrizione || 'Da decidere';
+  const chi = e.chiPartecipa || [];
+  document.querySelectorAll('.eChi').forEach(cb=>{ cb.checked = chi.includes(cb.value); });
+  document.getElementById('eProssimaAzione').value = e.prossimaAzione || '';
+  document.getElementById('eLink').value = e.link || '';
+  document.getElementById('eNote').value = e.note || '';
+  openModalEl('modalEvento');
+}
+
+async function deleteEvento(id){
+  if(!confirm('Eliminare questo evento?')) return;
+  try{
+    await apiDelete('eventi', id);
+  }catch(e){
+    alert('Errore nell\'eliminazione: ' + e.message);
+    return;
+  }
+  eventi = eventi.filter(x=>x.id!==id);
+  renderEventi(); renderDashboard();
+}
+
+function renderEventi(){
+  const search = document.getElementById('eventiSearch').value.toLowerCase();
+  const fCat = document.getElementById('eventiFiltroCategoria').value;
+  const fIscr = document.getElementById('eventiFiltroIscrizione').value;
+  const ordina = document.getElementById('eventiOrdina').value;
+  const mostraPassati = document.getElementById('eventiMostraPassati').checked;
+  let list = eventi.filter(e=>{
+    if(!mostraPassati && isEventoPassato(e)) return false;
+    if(fCat && e.categoria !== fCat) return false;
+    if(fIscr && e.iscrizione !== fIscr) return false;
+    if(search){
+      const hay = [e.nome, e.luogo, e.organizzatore, e.perche, e.prossimaAzione, e.note].join(' ').toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  list.sort((a,b)=>{
+    const da = String(a.dataInizio || '9999-12-31');
+    const db = String(b.dataInizio || '9999-12-31');
+    const ca = EV_CAT_ORDER[a.categoria] || 9;
+    const cb = EV_CAT_ORDER[b.categoria] || 9;
+    if(ordina === 'data') return da.localeCompare(db) || (ca - cb);
+    return (ca - cb) || da.localeCompare(db);
+  });
+  const container = document.getElementById('eventiList');
+  if(list.length === 0){
+    container.innerHTML = '<div class="empty-state">Nessun evento trovato. Aggiungine uno o importa il file JSON.</div>';
+    return;
+  }
+  container.innerHTML = list.map(e=>{
+    const quando = quandoEvento(e);
+    const linkOk = e.link && /^https?:\/\//i.test(e.link);
+    return `
+    <div class="item-card">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${esc(e.nome)}</div>
+          <div class="item-meta">
+            ${e.categoria ? `<span class="badge ${evCatClass(e.categoria)}">${esc(e.categoria)}</span>` : ''}
+            ${e.iscrizione ? `<span class="badge ${evIscrClass(e.iscrizione)}">${esc(e.iscrizione)}</span>` : ''}
+            ${e.statoData && e.statoData !== 'Confermata' ? ' · data: '+esc(e.statoData) : ''}
+            ${quando ? ' · '+esc(quando) : ''}
+            ${e.orario ? ' · '+esc(e.orario) : ''}
+            ${e.luogo ? ' · '+esc(e.luogo) : ''}
+            ${e.organizzatore ? ' · '+esc(e.organizzatore) : ''}
+            ${e.costo ? ' · '+esc(e.costo) : ''}
+          </div>
+          ${e.prossimaAzione ? `<div class="item-meta" style="margin-top:4px; color:var(--terracotta); font-weight:600;">→ ${esc(e.prossimaAzione)}</div>` : ''}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-ghost" onclick="editEvento('${e.id}')">Modifica</button>
+          <button class="btn btn-small btn-danger" onclick="deleteEvento('${e.id}')">Elimina</button>
+        </div>
+      </div>
+      ${(e.chiPartecipa && e.chiPartecipa.length) ? `<div class="tags">${e.chiPartecipa.map(n=>`<span class="badge-persona badge-persona-${esc(n)}">${esc(n)}</span>`).join('')}</div>` : ''}
+      ${e.perche ? `<div class="item-notes">${esc(e.perche)}</div>` : ''}
+      ${linkOk ? `<div class="item-link" style="margin-top:8px;"><a href="${esc(e.link)}" target="_blank" rel="noopener noreferrer">Apri la pagina dell'evento ↗</a></div>` : ''}
+      ${e.note ? `<div class="item-notes">${esc(e.note)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+document.getElementById('eventiSearch').addEventListener('input', renderEventi);
+document.getElementById('eventiFiltroCategoria').addEventListener('change', renderEventi);
+document.getElementById('eventiFiltroIscrizione').addEventListener('change', renderEventi);
+document.getElementById('eventiOrdina').addEventListener('change', renderEventi);
+document.getElementById('eventiMostraPassati').addEventListener('change', renderEventi);
+document.getElementById('exportEventi').addEventListener('click', ()=>downloadJson(eventi,'eventi-nysalab.json'));
+document.getElementById('importEventiBtn').addEventListener('click', ()=> document.getElementById('importEventiFile').click());
+document.getElementById('importEventiFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const done = await importJsonFile(file, 'eventi');
+  e.target.value = '';
+  if(done){ eventi = await apiList('eventi'); renderEventi(); renderDashboard(); }
+});
+
 // ================= DASHBOARD =================
 function renderDashboard(){
   const attivi = progetti.filter(p=>p.stato==='In corso').length;
   const daAvviare = progetti.filter(p=>p.stato==='Da avviare').length;
   const disponibili = candidati.filter(v=>v.disponibilita==='Disponibile').length;
   const daFareAperti = todos.filter(t=>t.stato!=='Fatto').length;
+  const eventiInArrivo = eventi.filter(isEventoFuturo).length;
   document.getElementById('statGrid').innerHTML = `
     <div class="stat-card"><div class="num">${progetti.length}</div><div class="label">Progetti totali</div></div>
     <div class="stat-card"><div class="num">${attivi}</div><div class="label">In corso</div></div>
@@ -1414,6 +1767,7 @@ function renderDashboard(){
     <div class="stat-card"><div class="num">${contatti.length}</div><div class="label">Contatti</div></div>
     <div class="stat-card"><div class="num">${disponibili}</div><div class="label">Candidati disponibili</div></div>
     <div class="stat-card"><div class="num">${daFareAperti}</div><div class="label">Da fare aperti</div></div>
+    <div class="stat-card"><div class="num">${eventiInArrivo}</div><div class="label">Eventi in arrivo</div></div>
   `;
 
   const today = new Date();
@@ -1468,6 +1822,17 @@ function renderDashboard(){
       <span class="date">${esc(quando)}</span>
     </div>`;
   }).join('') : '<div class="empty-state">Nessun impegno aperto al momento.</div>';
+
+  const prossimiEv = eventi.filter(isEventoFuturo)
+    .sort((a,b)=> String(a.dataInizio).localeCompare(String(b.dataInizio)))
+    .slice(0,5);
+  const dev = document.getElementById('dashEventi');
+  dev.innerHTML = prossimiEv.length ? prossimiEv.map(e=>`
+    <div class="deadline-row">
+      <span>${esc(e.nome)} ${e.categoria ? `<span class="badge ${evCatClass(e.categoria)}" style="margin-left:6px;">${esc(e.categoria)}</span>` : ''}</span>
+      <span class="date">${esc(quandoEvento(e))}</span>
+    </div>
+  `).join('') : '<div class="empty-state">Nessun evento in programma.</div>';
 }
 
 // ---------- utils ----------
@@ -1538,7 +1903,8 @@ async function loadAllData(){
     { key:'progetti',  label:'Progetti',    set: v => { progetti = v; } },
     { key:'contatti',  label:'Contatti',    set: v => { contatti = v; } },
     { key:'candidati', label:'Archivio CV', set: v => { candidati = v; } },
-    { key:'todo',      label:'Da fare',     set: v => { todos = v; } }
+    { key:'todo',      label:'Da fare',     set: v => { todos = v; } },
+    { key:'eventi',    label:'Eventi',      set: v => { eventi = v; } }
   ];
   showBanner('Carico i dati dal foglio Google…', 'info', false);
   const falliti = [];
@@ -1550,7 +1916,7 @@ async function loadAllData(){
       falliti.push({ label: s.label, motivo: e.message });
     }
     // mostro subito quello che è arrivato, senza aspettare gli altri
-    renderDashboard(); renderProgetti(); renderContatti(); renderCv(); renderTodo();
+    renderDashboard(); renderProgetti(); renderContatti(); renderCv(); renderTodo(); renderEventi();
   }
   if(falliti.length === 0){
     hideBanner();
