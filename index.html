@@ -180,18 +180,6 @@
   .badge-cstato-Cliente{ background:#d9ead9; color:#2d6a2d; }
   .badge-cstato-Partner{ background:#e0d4ec; color:#5c2d91; }
 
-  .badge-ev-Formazione{ background:#d9ead9; color:#2d6a2d; }
-  .badge-ev-Tecnologiaeinnovazione{ background:#cfe0f0; color:#1f4e79; }
-  .badge-ev-Gestioneaziendale{ background:#f0dcae; color:#7a5410; }
-  .badge-ev-HR{ background:#e0d4ec; color:#5c2d91; }
-  .badge-ev-default{ background:#eee; color:#666; }
-  .badge-ev-iscr-Dadecidere{ background:#eee; color:#666; }
-  .badge-ev-iscr-Daiscrivere{ background:#f0dcae; color:#7a5410; }
-  .badge-ev-iscr-Iscritto{ background:#d9ead9; color:#2d6a2d; }
-  .badge-ev-iscr-Partecipato{ background:#dbe6df; color:#234739; }
-  .badge-ev-iscr-Nonpartecipiamo{ background:#f3d6d0; color:#a13f2b; }
-  .item-link a{ color: var(--green); font-weight:600; font-size:0.83rem; }
-
   /* Modal */
   .modal-overlay{
     display:none; position:fixed; inset:0; background: rgba(35,71,57,0.35);
@@ -240,6 +228,29 @@
   .net-banner.error{ background:#fbece7; border:1px solid #e3c3b8; color:#8a3f1f; }
   .net-banner button{ flex-shrink:0; }
 
+  .tabs{ display:flex; gap:6px; margin-bottom:18px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .tab-btn{
+    background:none; border:none; padding:9px 16px; font-size:0.88rem; cursor:pointer;
+    color:var(--ink-soft); border-bottom:3px solid transparent; margin-bottom:-1px; font-weight:600;
+  }
+  .tab-btn.active{ color:var(--green); border-bottom-color:var(--terracotta); }
+  .stat-card .num.money{ font-size:1.45rem; }
+  .stat-card .num.pos{ color:#2d6a2d; }
+  .stat-card .num.neg{ color:#a13f2b; }
+  .contab-note{ font-size:0.78rem; color:var(--ink-soft); margin:-16px 0 18px; line-height:1.4; }
+  .mov-importo{ font-family:Georgia,serif; font-size:1.15rem; font-weight:700; white-space:nowrap; }
+  .mov-importo.pos{ color:#2d6a2d; }
+  .mov-importo.neg{ color:#a13f2b; }
+  .badge-mov-entrata{ background:#d9ead9; color:#2d6a2d; }
+  .badge-mov-uscita{ background:#f3d6d0; color:#a13f2b; }
+  .badge-mov-aperto{ background:#f0dcae; color:#7a5410; }
+  .badge-mov-scaduto{ background:#b0402a; color:#fff; }
+  .badge-mov-chiuso{ background:#dbe6df; color:#234739; }
+  .calcolo-box{
+    background:#fff; border:1px dashed var(--border); border-radius:8px;
+    padding:8px 12px; font-size:0.84rem; color:var(--ink-soft); margin-bottom:13px;
+  }
+
   @media (max-width: 760px){
     body{ flex-direction:column; }
     .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto; align-items:center; }
@@ -247,6 +258,8 @@
     .nav{ display:flex; padding:8px; flex:1; }
     .nav button{ white-space:nowrap; margin-bottom:0; }
     .main{ padding:20px; }
+    .field-row{ flex-wrap:wrap; }
+    .field-row .field{ min-width:110px; }
     .whoami{
       display:flex; align-items:center; gap:8px; flex-shrink:0;
       padding:8px 12px; border-top:none; border-left:1px solid rgba(245,235,220,0.15);
@@ -270,17 +283,18 @@
     <button class="nav-btn" data-view="contatti"><span class="nav-icon">◐</span> Contatti</button>
     <button class="nav-btn" data-view="cv"><span class="nav-icon">◆</span> Archivio CV</button>
     <button class="nav-btn" data-view="todo"><span class="nav-icon">☑</span> Da fare</button>
-    <button class="nav-btn" data-view="eventi"><span class="nav-icon">◷</span> Eventi</button>
+    <button class="nav-btn" data-view="contabilita"><span class="nav-icon">€</span> Contabilità</button>
   </div>
   <div class="whoami">
     <label>Chi sei</label>
     <select id="whoamiSelect">
       <option value="Ale">Ale</option>
+      <option value="Ilaria">Ilaria</option>
       <option value="Umasha">Umasha</option>
     </select>
     <button type="button" id="openConfigBtn" style="margin-top:10px; width:100%; background:none; border:1px solid rgba(245,235,220,0.25); color:var(--cream); padding:6px; border-radius:6px; font-size:0.75rem; cursor:pointer;">⚙ Impostazioni</button>
   </div>
-  <div class="sidebar-footer">accoglienza · crescita · onestà</div>
+  <div class="sidebar-footer">accoglienza · crescita · rettitudine</div>
 </div>
 
 <div class="main">
@@ -305,8 +319,8 @@
       <div id="dashCrmFollowup"></div>
     </div>
     <div class="dash-section">
-      <h3>Prossimi eventi</h3>
-      <div id="dashEventi"></div>
+      <h3>Incassi e pagamenti in scadenza</h3>
+      <div id="dashContab"></div>
     </div>
     <div class="dash-section">
       <h3>Candidati disponibili</h3>
@@ -375,7 +389,7 @@
       </select>
       <select id="contattiFiltroOrigine">
         <option value="">Tutte le origini</option>
-        <option>Ale</option><option>Umasha</option>
+        <option>Ale</option><option>Ilaria</option><option>Umasha</option>
       </select>
     </div>
     <div class="card-list" id="contattiList"></div>
@@ -422,7 +436,7 @@
     <div class="toolbar">
       <select id="todoFiltroChi">
         <option value="">Tutti</option>
-        <option>Ale</option><option>Umasha</option>
+        <option>Ale</option><option>Ilaria</option><option>Umasha</option>
       </select>
       <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--ink-soft); cursor:pointer;">
         <input type="checkbox" id="todoMostraCompletati" style="width:auto;"> Mostra completati
@@ -431,41 +445,50 @@
     <div class="card-list" id="todoList"></div>
   </div>
 
-  <!-- EVENTI -->
-  <div class="view" id="view-eventi">
+  <!-- CONTABILITÀ -->
+  <div class="view" id="view-contabilita">
     <div class="view-header">
       <div>
-        <h2>Eventi</h2>
-        <div class="sub">Eventi di formazione, tecnologia, gestione aziendale e HR per fare contatti</div>
+        <h2>Contabilità</h2>
+        <div class="sub">Prima nota e scadenze di incassi e pagamenti — controllo interno, non sostituisce la contabilità del commercialista</div>
       </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-ghost" id="exportEventi">Esporta JSON</button>
-        <button class="btn btn-ghost" id="importEventiBtn">Importa JSON</button>
-        <input type="file" id="importEventiFile" accept="application/json" style="display:none;">
-        <button class="btn btn-primary" id="openEventoModal">+ Nuovo evento</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="exportMovimentiCsv">Esporta CSV del periodo</button>
+        <button class="btn btn-ghost" id="exportMovimenti">Esporta JSON</button>
+        <button class="btn btn-ghost" id="importMovimentiBtn">Importa JSON</button>
+        <input type="file" id="importMovimentiFile" accept="application/json" style="display:none;">
+        <button class="btn btn-primary" id="openMovimentoModal">+ Nuovo movimento</button>
       </div>
     </div>
+    <div class="tabs">
+      <button class="tab-btn active" id="tabPrimaNota">Prima nota</button>
+      <button class="tab-btn" id="tabScadenziario">Da incassare e da pagare</button>
+    </div>
+    <div class="stat-grid" id="contabStats"></div>
+    <div class="contab-note" id="contabCaption"></div>
     <div class="toolbar">
-      <input type="text" id="eventiSearch" placeholder="Cerca per nome, luogo, organizzatore, note...">
-      <select id="eventiFiltroCategoria">
-        <option value="">Tutte le categorie</option>
-        <option>Formazione</option><option>Tecnologia e innovazione</option>
-        <option>Gestione aziendale</option><option>HR</option>
+      <input type="text" id="contabSearch" placeholder="Cerca per descrizione, cliente/fornitore, n. documento...">
+      <select id="contabFiltroTipo">
+        <option value="">Entrate e uscite</option>
+        <option>Entrata</option><option>Uscita</option>
       </select>
-      <select id="eventiFiltroIscrizione">
-        <option value="">Tutte le iscrizioni</option>
-        <option>Da decidere</option><option>Da iscrivere</option><option>Iscritto</option>
-        <option>Partecipato</option><option>Non partecipiamo</option>
-      </select>
-      <select id="eventiOrdina">
-        <option value="priorita">Ordina per priorità</option>
-        <option value="data">Ordina per data</option>
-      </select>
-      <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--ink-soft); cursor:pointer;">
-        <input type="checkbox" id="eventiMostraPassati" style="width:auto;"> Mostra passati
-      </label>
+      <div id="contabFiltriPN" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <select id="contabAnno"></select>
+        <select id="contabMese">
+          <option value="">Tutti i mesi</option>
+          <option value="01">Gennaio</option><option value="02">Febbraio</option><option value="03">Marzo</option>
+          <option value="04">Aprile</option><option value="05">Maggio</option><option value="06">Giugno</option>
+          <option value="07">Luglio</option><option value="08">Agosto</option><option value="09">Settembre</option>
+          <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+        </select>
+        <select id="contabFiltroStato">
+          <option value="">Aperti e chiusi</option>
+          <option value="aperti">Solo da incassare / da pagare</option>
+          <option value="chiusi">Solo incassati / pagati</option>
+        </select>
+      </div>
     </div>
-    <div class="card-list" id="eventiList"></div>
+    <div class="card-list" id="contabList"></div>
   </div>
 
 </div>
@@ -501,7 +524,7 @@
     <div class="field-row">
       <div class="field">
         <label>Responsabile</label>
-        <select id="pResponsabile"><option>Ale</option><option>Umasha</option></select>
+        <select id="pResponsabile"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
       </div>
       <div class="field">
         <label>Stato</label>
@@ -618,7 +641,7 @@
     <div class="field-row">
       <div class="field">
         <label>Origine (chi ha portato il contatto)</label>
-        <select id="cOrigine"><option>Ale</option><option>Umasha</option></select>
+        <select id="cOrigine"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
       </div>
       <div class="field">
         <label>Ultimo contatto</label>
@@ -709,7 +732,7 @@
     <input type="hidden" id="tId">
     <div class="field">
       <label>Chi</label>
-      <select id="tResponsabile"><option>Ale</option><option>Umasha</option></select>
+      <select id="tResponsabile"><option>Ale</option><option>Ilaria</option><option>Umasha</option></select>
     </div>
     <div class="field">
       <label>Cosa</label>
@@ -736,93 +759,83 @@
   </div>
 </div>
 
-<!-- MODAL EVENTO -->
-<div class="modal-overlay" id="modalEvento">
+<!-- MODAL MOVIMENTO -->
+<div class="modal-overlay" id="modalMovimento">
   <div class="modal">
-    <h3 id="eventoModalTitle">Nuovo evento</h3>
-    <input type="hidden" id="eId">
+    <h3 id="movimentoModalTitle">Nuovo movimento</h3>
+    <input type="hidden" id="mId">
+    <div class="field-row">
+      <div class="field">
+        <label>Tipo</label>
+        <select id="mTipo"><option>Entrata</option><option>Uscita</option></select>
+      </div>
+      <div class="field">
+        <label>Data documento</label>
+        <input type="date" id="mData">
+      </div>
+    </div>
     <div class="field">
-      <label>Nome evento</label>
-      <input type="text" id="eNome" placeholder="Es. SMAU Milano 2026">
+      <label>Descrizione</label>
+      <input type="text" id="mDescrizione" placeholder="Es. Corso AI Base — acconto">
     </div>
     <div class="field-row">
       <div class="field">
         <label>Categoria</label>
-        <select id="eCategoria">
-          <option>Formazione</option><option>Tecnologia e innovazione</option>
-          <option>Gestione aziendale</option><option>HR</option>
-        </select>
+        <input type="text" id="mCategoria" list="mCatList" autocomplete="off" placeholder="Scegli o scrivi">
+        <datalist id="mCatList"></datalist>
       </div>
       <div class="field">
-        <label>Stato data</label>
-        <select id="eStatoData">
-          <option>Confermata</option><option>Da verificare</option><option>Da monitorare</option>
-        </select>
+        <label>Cliente / fornitore</label>
+        <input type="text" id="mControparte" list="mContropartiList" autocomplete="off" placeholder="Scegli dai Contatti o scrivi">
+        <datalist id="mContropartiList"></datalist>
       </div>
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Data inizio</label>
-        <input type="date" id="eDataInizio">
+        <label>Progetto (opzionale)</label>
+        <select id="mProgetto"></select>
       </div>
       <div class="field">
-        <label>Data fine</label>
-        <input type="date" id="eDataFine">
+        <label>N. fattura / documento</label>
+        <input type="text" id="mDocumento">
       </div>
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Orario</label>
-        <input type="text" id="eOrario" placeholder="Es. 9:30-17:00">
+        <label>Importo (€)</label>
+        <input type="number" id="mImporto" step="0.01" min="0" inputmode="decimal">
       </div>
       <div class="field">
-        <label>Costo / accesso</label>
-        <input type="text" id="eCosto" placeholder="Es. Gratuito con registrazione">
+        <label>L'importo è</label>
+        <select id="mModo"><option value="netto">IVA esclusa</option><option value="lordo">IVA inclusa</option></select>
+      </div>
+      <div class="field">
+        <label>IVA %</label>
+        <input type="number" id="mAliquota" step="0.1" min="0" value="22">
       </div>
     </div>
-    <div class="field">
-      <label>Luogo</label>
-      <input type="text" id="eLuogo" placeholder="Es. Allianz MiCo, Milano">
-    </div>
-    <div class="field">
-      <label>Organizzatore</label>
-      <input type="text" id="eOrganizzatore">
-    </div>
-    <div class="field">
-      <label>Perché ci interessa</label>
-      <textarea id="ePerche" placeholder="Che contatti o temi ci porta..."></textarea>
-    </div>
+    <div class="calcolo-box" id="mCalcolo"></div>
     <div class="field-row">
       <div class="field">
-        <label>Iscrizione</label>
-        <select id="eIscrizione">
-          <option>Da decidere</option><option>Da iscrivere</option><option>Iscritto</option>
-          <option>Partecipato</option><option>Non partecipiamo</option>
-        </select>
+        <label>Stato</label>
+        <select id="mStato"></select>
       </div>
       <div class="field">
-        <label>Chi partecipa</label>
-        <div style="display:flex; gap:14px; padding-top:7px;">
-          <label style="display:flex; align-items:center; gap:5px; font-size:0.85rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="eChi" value="Ale" style="width:auto;"> Ale</label>
-          <label style="display:flex; align-items:center; gap:5px; font-size:0.85rem; color:var(--ink); cursor:pointer; font-weight:400; text-transform:none;"><input type="checkbox" class="eChi" value="Umasha" style="width:auto;"> Umasha</label>
-        </div>
+        <label>Scadenza</label>
+        <input type="date" id="mScadenza">
       </div>
     </div>
     <div class="field">
-      <label>Prossima azione</label>
-      <input type="text" id="eProssimaAzione" placeholder="Es. Verificare la data e iscriversi">
-    </div>
-    <div class="field">
-      <label>Link</label>
-      <input type="text" id="eLink" placeholder="https://...">
+      <label id="mDataPagamentoLabel">Data incasso</label>
+      <input type="date" id="mDataPagamento">
     </div>
     <div class="field">
       <label>Note</label>
-      <textarea id="eNote"></textarea>
+      <textarea id="mNote"></textarea>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modalEvento')">Annulla</button>
-      <button class="btn btn-primary" id="saveEvento">Salva</button>
+      <button class="btn btn-ghost" onclick="closeModal('modalMovimento')">Annulla</button>
+      <button class="btn btn-primary" id="saveMovimento">Salva</button>
     </div>
   </div>
 </div>
@@ -833,7 +846,7 @@
     <h3>Impostazioni — collegamento a Google Sheets</h3>
     <p style="font-size:0.84rem; color:var(--ink-soft); margin-bottom:14px; line-height:1.5;">
       Incolla qui l'URL del Web App di Apps Script (quello che finisce con <code>/exec</code>).
-      Va inserito una sola volta: da quel momento resta salvato su questo dispositivo.
+      Va inserito una sola volta: da quel momento resta salvato per tutte e tre.
     </p>
     <div class="field">
       <label>URL Web App</label>
@@ -852,7 +865,7 @@ let progetti = [];
 let contatti = [];
 let candidati = [];
 let todos = [];
-let eventi = [];
+let movimenti = [];
 
 // ---------- backend config (URL salvato in localStorage del browser) ----------
 let backendUrl = null;
@@ -925,16 +938,6 @@ async function apiDelete(sheetKey, id){
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function whoami(){ return document.getElementById('whoamiSelect').value; }
-// Imposta un menu a tendina; se il valore salvato non è più tra le opzioni (es. un vecchio
-// record con un nome non più nei menu) lo aggiunge, così modificando il record non va perso.
-function setSelectValue(id, value, fallback){
-  const sel = document.getElementById(id);
-  const v = value || fallback;
-  if(v && !Array.from(sel.options).some(o=>o.value===v)){
-    const o = document.createElement('option'); o.textContent = v; o.value = v; sel.appendChild(o);
-  }
-  sel.value = v;
-}
 
 // ---------- nav ----------
 document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -1047,7 +1050,7 @@ function editProgetto(id){
   document.getElementById('pPercorsoWrap').style.display = p.tipo==='GOL/DIL' ? 'block':'none';
   if(p.percorsoDIL) document.getElementById('pPercorso').value = p.percorsoDIL;
   document.getElementById('pCliente').value = p.cliente || '';
-  setSelectValue('pResponsabile', p.responsabile, 'Ale');
+  document.getElementById('pResponsabile').value = p.responsabile || 'Ale';
   document.getElementById('pStato').value = p.stato || 'Da avviare';
   document.getElementById('pInizio').value = p.dataInizio || '';
   document.getElementById('pScadenza').value = p.dataScadenza || '';
@@ -1216,7 +1219,7 @@ function editContatto(id){
   document.getElementById('cCanale').value = c.canale || '';
   const interessi = c.interesse || [];
   document.querySelectorAll('.cInteresse').forEach(cb=>{ cb.checked = interessi.includes(cb.value); });
-  setSelectValue('cOrigine', c.origine, 'Ale');
+  document.getElementById('cOrigine').value = c.origine || 'Ale';
   document.getElementById('cUltimoContatto').value = c.ultimoContatto || '';
   document.getElementById('cProssimaAzione').value = c.prossimaAzione || '';
   document.getElementById('cDataProssimaAzione').value = c.dataProssimaAzione || '';
@@ -1469,7 +1472,7 @@ function editTodo(id){
   if(!t) return;
   document.getElementById('todoModalTitle').textContent = 'Modifica da fare';
   document.getElementById('tId').value = t.id;
-  setSelectValue('tResponsabile', t.responsabile, 'Ale');
+  document.getElementById('tResponsabile').value = t.responsabile || 'Ale';
   document.getElementById('tTesto').value = t.testo;
   document.getElementById('tData').value = t.data || '';
   document.getElementById('tOra').value = t.ora || '';
@@ -1556,202 +1559,406 @@ document.getElementById('importTodoFile').addEventListener('change', async (e)=>
 // aggiorna la lista "da fare" quando si cambia "Chi sei" in sidebar, per la dashboard personalizzata
 document.getElementById('whoamiSelect').addEventListener('change', renderDashboard);
 
-// ================= EVENTI =================
-const EV_CAT_ORDER = { 'Formazione':1, 'Tecnologia e innovazione':2, 'Gestione aziendale':3, 'HR':4 };
+// ================= CONTABILITÀ =================
+let contabTab = 'primanota';
+let contabYearInit = false;
+const CAT_ENTRATE = ['Formazione','Recruitment','Mentoring','Consulenza','Altro'];
+const CAT_USCITE = ['Software e servizi','Consulenti e collaboratori','Marketing e pubblicità','Banca e commissioni','Imposte e tasse','Formazione e aggiornamento','Altro'];
 
-function oggiISO(){
+// ---- calcoli e utilità (senza DOM) ----
+const eurFmt = new Intl.NumberFormat('it-IT', { style:'currency', currency:'EUR', useGrouping:'always' });
+function fmtEur(n){ return eurFmt.format(Number(n) || 0); }
+function isoFromDate(d){
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function todayISO(){ return isoFromDate(new Date()); }
+function addDaysISO(n){
   const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  return isoFromDate(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n));
 }
-function isEventoPassato(e){
-  const fine = e.dataFine || e.dataInizio;
-  return !!fine && String(fine) < oggiISO();
+// gli importi si calcolano in centesimi interi per evitare errori di arrotondamento
+function toCents(x){ return Math.round((Number(x) || 0) * 100 + 1e-8); }
+function computeAmounts(importo, aliquota, modo){
+  const p = Number(aliquota) || 0;
+  let imp, iva, tot;
+  if(modo === 'lordo'){
+    tot = toCents(importo);
+    imp = Math.round(tot / (1 + p / 100));
+    iva = tot - imp;
+  } else {
+    imp = toCents(importo);
+    iva = Math.round(imp * p / 100);
+    tot = imp + iva;
+  }
+  return { imponibile: imp / 100, iva: iva / 100, totale: tot / 100 };
 }
-function isEventoFuturo(e){ return !!e.dataInizio && !isEventoPassato(e); }
-function quandoEvento(e){
-  if(!e.dataInizio) return '';
-  return (e.dataFine && e.dataFine !== e.dataInizio) ? e.dataInizio + ' → ' + e.dataFine : e.dataInizio;
-}
-function evCatClass(cat){
-  const k = String(cat||'').replace(/[^A-Za-z]/g,'');
-  return k ? 'badge-ev-' + k : 'badge-ev-default';
-}
-function evIscrClass(v){
-  return 'badge-ev-iscr-' + String(v||'').replace(/[^A-Za-z]/g,'');
+function statiPerTipo(tipo){ return tipo === 'Entrata' ? ['Da incassare', 'Incassato'] : ['Da pagare', 'Pagato']; }
+function movIsOpen(m){ return m.stato === 'Da incassare' || m.stato === 'Da pagare'; }
+function movIsOverdue(m){ return movIsOpen(m) && !!m.scadenza && String(m.scadenza) < todayISO(); }
+function sumBy(list, field){ return list.reduce((s, m) => s + toCents(m[field]), 0) / 100; }
+function filtraPeriodo(list, anno, mese){
+  if(!anno) return list;
+  return list.filter(m => {
+    const d = String(m.data || '');
+    if(d.slice(0, 4) !== anno) return false;
+    if(mese && d.slice(5, 7) !== mese) return false;
+    return true;
+  });
 }
 
-document.getElementById('openEventoModal').addEventListener('click', ()=>{
-  document.getElementById('eventoModalTitle').textContent = 'Nuovo evento';
-  document.getElementById('eId').value = '';
-  document.getElementById('eNome').value = '';
-  document.getElementById('eCategoria').value = 'Formazione';
-  document.getElementById('eStatoData').value = 'Da verificare';
-  document.getElementById('eDataInizio').value = '';
-  document.getElementById('eDataFine').value = '';
-  document.getElementById('eOrario').value = '';
-  document.getElementById('eCosto').value = '';
-  document.getElementById('eLuogo').value = '';
-  document.getElementById('eOrganizzatore').value = '';
-  document.getElementById('ePerche').value = '';
-  document.getElementById('eIscrizione').value = 'Da decidere';
-  document.querySelectorAll('.eChi').forEach(cb=>cb.checked=false);
-  document.getElementById('eProssimaAzione').value = '';
-  document.getElementById('eLink').value = '';
-  document.getElementById('eNote').value = '';
-  openModalEl('modalEvento');
+// ---- export CSV (per il commercialista: separatore ";" e virgola decimale, come vuole Excel in italiano) ----
+function dmy(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso || '');
+}
+function csvCell(v){
+  const s = String(v == null ? '' : v);
+  return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function csvText(v){
+  let s = String(v == null ? '' : v);
+  if(/^[=+\-@]/.test(s)) s = "'" + s; // evita che Excel scambi un testo per una formula
+  return csvCell(s);
+}
+function numIt(n){ return (Number(n) || 0).toFixed(2).replace('.', ','); }
+function buildMovimentiCsv(list, progettiList){
+  const head = ['Data','Tipo','Descrizione','Categoria','Cliente/Fornitore','Progetto','N. documento','Imponibile','Aliquota IVA %','IVA','Totale','Stato','Scadenza','Data incasso/pagamento','Note'];
+  const nomeProg = id => { const p = progettiList.find(x => x.id === id); return p ? p.nome : ''; };
+  const righe = list.slice()
+    .sort((a, b) => String(a.data || '').localeCompare(String(b.data || '')))
+    .map(m => [
+      csvCell(dmy(m.data)), csvCell(m.tipo), csvText(m.descrizione), csvText(m.categoria), csvText(m.controparte),
+      csvText(nomeProg(m.progettoId)), csvText(m.numeroFattura),
+      numIt(m.imponibile),
+      (m.aliquotaIva === '' || m.aliquotaIva == null) ? '' : numIt(m.aliquotaIva),
+      numIt(m.iva), numIt(m.totale),
+      csvCell(m.stato), csvCell(dmy(m.scadenza)), csvCell(dmy(m.dataPagamento)), csvText(m.note)
+    ].join(';'));
+  return '\uFEFF' + [head.map(csvCell).join(';')].concat(righe).join('\r\n');
+}
+
+// ---- schermata ----
+function refreshContabYears(){
+  const sel = document.getElementById('contabAnno');
+  const prev = sel.value;
+  const corrente = String(new Date().getFullYear());
+  const anni = new Set([corrente]);
+  movimenti.forEach(m => { const y = String(m.data || '').slice(0, 4); if(/^\d{4}$/.test(y)) anni.add(y); });
+  const arr = Array.from(anni).sort().reverse();
+  sel.innerHTML = '<option value="">Tutti gli anni</option>' + arr.map(a => `<option value="${a}">${a}</option>`).join('');
+  if(!contabYearInit){ sel.value = corrente; contabYearInit = true; }
+  else { sel.value = (prev === '' || arr.includes(prev)) ? prev : corrente; }
+}
+
+function movimentoCard(m){
+  const entrata = m.tipo === 'Entrata';
+  const aperto = movIsOpen(m);
+  const scaduto = movIsOverdue(m);
+  const prog = m.progettoId ? progetti.find(p => p.id === m.progettoId) : null;
+  const progLabel = m.progettoId ? (prog ? prog.nome : '(progetto eliminato)') : '';
+  const statoClass = aperto ? (scaduto ? 'badge-mov-scaduto' : 'badge-mov-aperto') : 'badge-mov-chiuso';
+  const chiusoLabel = entrata ? 'Incassato' : 'Pagato';
+  return `
+    <div class="item-card">
+      <div class="item-top">
+        <div>
+          <div class="item-title">${esc(m.descrizione)}</div>
+          <div class="item-meta">
+            <span class="badge ${entrata ? 'badge-mov-entrata' : 'badge-mov-uscita'}">${esc(m.tipo)}</span>
+            <span class="badge ${statoClass}">${esc(m.stato)}${scaduto ? ' · scaduto' : ''}</span>
+            ${m.data ? ' · ' + esc(String(m.data)) : ''}
+            ${m.controparte ? ' · ' + esc(m.controparte) : ''}
+            ${m.categoria ? ' · ' + esc(m.categoria) : ''}
+            ${progLabel ? ' · ' + esc(progLabel) : ''}
+            ${m.numeroFattura ? ' · doc. ' + esc(m.numeroFattura) : ''}
+          </div>
+          ${aperto && m.scadenza ? `<div class="item-meta" style="margin-top:4px; ${scaduto ? 'color:#b0402a; font-weight:700;' : ''}">Scadenza ${esc(String(m.scadenza))}</div>` : ''}
+          ${!aperto && m.dataPagamento ? `<div class="item-meta" style="margin-top:4px;">${chiusoLabel} il ${esc(String(m.dataPagamento))}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <div class="mov-importo ${entrata ? 'pos' : 'neg'}">${entrata ? '+' : '−'} ${fmtEur(m.totale)}</div>
+          <div class="item-meta">${fmtEur(m.imponibile)} + IVA ${fmtEur(m.iva)}</div>
+        </div>
+      </div>
+      <div class="item-actions" style="margin-top:10px;">
+        <button class="btn btn-small btn-ghost" onclick="toggleMovimentoStato('${m.id}')">${aperto ? (entrata ? '✓ Segna incassato' : '✓ Segna pagato') : '↺ Riapri'}</button>
+        <button class="btn btn-small btn-ghost" onclick="editMovimento('${m.id}')">Modifica</button>
+        <button class="btn btn-small btn-danger" onclick="deleteMovimento('${m.id}')">Elimina</button>
+      </div>
+      ${m.note ? `<div class="item-notes">${esc(m.note)}</div>` : ''}
+    </div>`;
+}
+
+function renderContabilita(){
+  refreshContabYears();
+  const isPN = (contabTab === 'primanota');
+  document.getElementById('tabPrimaNota').classList.toggle('active', isPN);
+  document.getElementById('tabScadenziario').classList.toggle('active', !isPN);
+  document.getElementById('contabFiltriPN').style.display = isPN ? 'flex' : 'none';
+  document.getElementById('exportMovimentiCsv').style.display = isPN ? '' : 'none';
+
+  const search = document.getElementById('contabSearch').value.toLowerCase();
+  const fTipo = document.getElementById('contabFiltroTipo').value;
+  const matchSearch = m => {
+    if(!search) return true;
+    const prog = progetti.find(p => p.id === m.progettoId);
+    const hay = [m.descrizione, m.controparte, m.categoria, m.numeroFattura, m.note, prog ? prog.nome : ''].join(' ').toLowerCase();
+    return hay.includes(search);
+  };
+  const card = (num, label, cls) => `<div class="stat-card"><div class="num money ${cls || ''}">${num}</div><div class="label">${label}</div></div>`;
+
+  const apertiEntrate = movimenti.filter(m => movIsOpen(m) && m.tipo === 'Entrata');
+  const apertiUscite = movimenti.filter(m => movIsOpen(m) && m.tipo === 'Uscita');
+  const stats = document.getElementById('contabStats');
+  const caption = document.getElementById('contabCaption');
+  let list;
+
+  if(isPN){
+    const anno = document.getElementById('contabAnno').value;
+    const mese = document.getElementById('contabMese').value;
+    const periodo = filtraPeriodo(movimenti, anno, mese);
+    const entrate = sumBy(periodo.filter(m => m.tipo === 'Entrata'), 'imponibile');
+    const uscite = sumBy(periodo.filter(m => m.tipo === 'Uscita'), 'imponibile');
+    const saldo = Math.round((entrate - uscite) * 100) / 100;
+    stats.innerHTML =
+      card(fmtEur(entrate), 'Entrate del periodo') +
+      card(fmtEur(uscite), 'Uscite del periodo') +
+      card(fmtEur(saldo), 'Saldo del periodo', saldo >= 0 ? 'pos' : 'neg') +
+      card(fmtEur(sumBy(apertiEntrate, 'totale')), 'Da incassare (totale)') +
+      card(fmtEur(sumBy(apertiUscite, 'totale')), 'Da pagare (totale)');
+    caption.textContent = 'Entrate, uscite e saldo: importi IVA esclusa, per data del documento nel periodo scelto. Da incassare e da pagare: importi IVA inclusa, su tutto il periodo.';
+    const fStato = document.getElementById('contabFiltroStato').value;
+    list = periodo
+      .filter(m => (!fTipo || m.tipo === fTipo)
+        && (!fStato || (fStato === 'aperti' ? movIsOpen(m) : !movIsOpen(m)))
+        && matchSearch(m))
+      .sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
+  } else {
+    const scadE = apertiEntrate.filter(movIsOverdue);
+    const scadU = apertiUscite.filter(movIsOverdue);
+    stats.innerHTML =
+      card(fmtEur(sumBy(apertiEntrate, 'totale')), `Da incassare (${apertiEntrate.length})`) +
+      card(fmtEur(sumBy(scadE, 'totale')), 'di cui scaduti', scadE.length ? 'neg' : '') +
+      card(fmtEur(sumBy(apertiUscite, 'totale')), `Da pagare (${apertiUscite.length})`) +
+      card(fmtEur(sumBy(scadU, 'totale')), 'di cui scaduti', scadU.length ? 'neg' : '');
+    caption.textContent = 'Importi IVA inclusa. «Scaduto» = scadenza passata e movimento ancora aperto. Ordinati per scadenza: i più urgenti in alto.';
+    list = movimenti
+      .filter(m => movIsOpen(m) && (!fTipo || m.tipo === fTipo) && matchSearch(m))
+      .sort((a, b) => (a.scadenza ? String(a.scadenza) : '9999').localeCompare(b.scadenza ? String(b.scadenza) : '9999'));
+  }
+
+  const container = document.getElementById('contabList');
+  if(list.length === 0){
+    container.innerHTML = isPN
+      ? '<div class="empty-state">Nessun movimento in questo periodo. Aggiungine uno con «+ Nuovo movimento».</div>'
+      : '<div class="empty-state">Niente da incassare o da pagare: tutto in regola.</div>';
+    return;
+  }
+  container.innerHTML = list.map(movimentoCard).join('');
+}
+
+// ---- modulo movimento ----
+function movFillLists(){
+  const tipo = document.getElementById('mTipo').value;
+  document.getElementById('mCatList').innerHTML = (tipo === 'Entrata' ? CAT_ENTRATE : CAT_USCITE)
+    .map(c => `<option value="${esc(c)}"></option>`).join('');
+  const nomi = Array.from(new Set(contatti.map(c => c.nome).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  document.getElementById('mContropartiList').innerHTML = nomi.map(n => `<option value="${esc(n)}"></option>`).join('');
+}
+function movFillProgetti(selected){
+  const sel = document.getElementById('mProgetto');
+  sel.innerHTML = '<option value="">— nessuno —</option>' +
+    progetti.slice().sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || '')))
+      .map(p => `<option value="${esc(p.id)}">${esc(p.nome)}</option>`).join('');
+  sel.value = selected || '';
+}
+function movFillStati(selected){
+  const tipo = document.getElementById('mTipo').value;
+  const stati = statiPerTipo(tipo);
+  const sel = document.getElementById('mStato');
+  sel.innerHTML = stati.map(s => `<option>${s}</option>`).join('');
+  sel.value = (selected && stati.includes(selected)) ? selected : stati[0];
+  document.getElementById('mDataPagamentoLabel').textContent = tipo === 'Entrata' ? 'Data incasso' : 'Data pagamento';
+}
+function movUpdateCalcolo(){
+  const raw = document.getElementById('mImporto').value;
+  const box = document.getElementById('mCalcolo');
+  if(raw === '' || isNaN(Number(raw))){
+    box.textContent = 'Inserisci l\'importo per vedere imponibile, IVA e totale.';
+    return;
+  }
+  const a = computeAmounts(raw, document.getElementById('mAliquota').value, document.getElementById('mModo').value);
+  box.textContent = `Imponibile ${fmtEur(a.imponibile)} · IVA ${fmtEur(a.iva)} · Totale ${fmtEur(a.totale)}`;
+}
+
+document.getElementById('openMovimentoModal').addEventListener('click', () => {
+  document.getElementById('movimentoModalTitle').textContent = 'Nuovo movimento';
+  document.getElementById('mId').value = '';
+  document.getElementById('mTipo').value = 'Entrata';
+  document.getElementById('mData').value = todayISO();
+  document.getElementById('mDescrizione').value = '';
+  document.getElementById('mCategoria').value = '';
+  document.getElementById('mControparte').value = '';
+  document.getElementById('mDocumento').value = '';
+  document.getElementById('mImporto').value = '';
+  document.getElementById('mModo').value = 'netto';
+  document.getElementById('mAliquota').value = '22';
+  document.getElementById('mScadenza').value = '';
+  document.getElementById('mDataPagamento').value = '';
+  document.getElementById('mNote').value = '';
+  movFillLists();
+  movFillProgetti('');
+  movFillStati('');
+  movUpdateCalcolo();
+  openModalEl('modalMovimento');
 });
 
-document.getElementById('saveEvento').addEventListener('click', async ()=>{
-  const id = document.getElementById('eId').value;
-  const nome = document.getElementById('eNome').value.trim();
-  if(!nome){ alert('Dai un nome all\'evento.'); return; }
+function editMovimento(id){
+  const m = movimenti.find(x => x.id === id);
+  if(!m) return;
+  document.getElementById('movimentoModalTitle').textContent = 'Modifica movimento';
+  document.getElementById('mId').value = m.id;
+  document.getElementById('mTipo').value = m.tipo === 'Uscita' ? 'Uscita' : 'Entrata';
+  document.getElementById('mData').value = m.data || '';
+  document.getElementById('mDescrizione').value = m.descrizione || '';
+  document.getElementById('mCategoria').value = m.categoria || '';
+  document.getElementById('mControparte').value = m.controparte || '';
+  document.getElementById('mDocumento').value = m.numeroFattura || '';
+  document.getElementById('mImporto').value = (m.imponibile === '' || m.imponibile == null) ? '' : m.imponibile;
+  document.getElementById('mModo').value = 'netto';
+  document.getElementById('mAliquota').value = (m.aliquotaIva === '' || m.aliquotaIva == null) ? 22 : m.aliquotaIva;
+  document.getElementById('mScadenza').value = m.scadenza || '';
+  document.getElementById('mDataPagamento').value = m.dataPagamento || '';
+  document.getElementById('mNote').value = m.note || '';
+  movFillLists();
+  movFillProgetti(m.progettoId || '');
+  movFillStati(m.stato);
+  movUpdateCalcolo();
+  openModalEl('modalMovimento');
+}
+
+document.getElementById('saveMovimento').addEventListener('click', async () => {
+  const btn = document.getElementById('saveMovimento');
+  if(btn.disabled) return;
+  const id = document.getElementById('mId').value;
+  const descrizione = document.getElementById('mDescrizione').value.trim();
+  if(!descrizione){ alert('Scrivi una descrizione.'); return; }
+  const importoRaw = document.getElementById('mImporto').value;
+  if(importoRaw === '' || isNaN(Number(importoRaw)) || Number(importoRaw) < 0){
+    alert('Inserisci un importo valido (zero o più).'); return;
+  }
+  const aliquotaRaw = document.getElementById('mAliquota').value;
+  const aliquota = aliquotaRaw === '' ? 0 : Number(aliquotaRaw);
+  if(isNaN(aliquota) || aliquota < 0){ alert('L\'aliquota IVA non è valida.'); return; }
+  const tipo = document.getElementById('mTipo').value;
+  const a = computeAmounts(importoRaw, aliquota, document.getElementById('mModo').value);
+  const stato = document.getElementById('mStato').value;
+  const chiuso = (stato === statiPerTipo(tipo)[1]);
+  let dataPagamento = document.getElementById('mDataPagamento').value;
+  if(chiuso && !dataPagamento) dataPagamento = todayISO();
+  if(!chiuso) dataPagamento = '';
+  const esistente = id ? movimenti.find(x => x.id === id) : null;
   const obj = {
     id: id || uid(),
-    categoria: document.getElementById('eCategoria').value,
-    nome,
-    dataInizio: document.getElementById('eDataInizio').value,
-    dataFine: document.getElementById('eDataFine').value,
-    orario: document.getElementById('eOrario').value.trim(),
-    luogo: document.getElementById('eLuogo').value.trim(),
-    organizzatore: document.getElementById('eOrganizzatore').value.trim(),
-    costo: document.getElementById('eCosto').value.trim(),
-    statoData: document.getElementById('eStatoData').value,
-    perche: document.getElementById('ePerche').value.trim(),
-    prossimaAzione: document.getElementById('eProssimaAzione').value.trim(),
-    link: document.getElementById('eLink').value.trim(),
-    iscrizione: document.getElementById('eIscrizione').value,
-    chiPartecipa: Array.from(document.querySelectorAll('.eChi:checked')).map(cb=>cb.value),
-    note: document.getElementById('eNote').value.trim(),
-    aggiuntoDa: whoami()
+    data: document.getElementById('mData').value || todayISO(),
+    tipo,
+    descrizione,
+    categoria: document.getElementById('mCategoria').value.trim(),
+    controparte: document.getElementById('mControparte').value.trim(),
+    progettoId: document.getElementById('mProgetto').value,
+    numeroFattura: document.getElementById('mDocumento').value.trim(),
+    imponibile: a.imponibile,
+    aliquotaIva: aliquota,
+    iva: a.iva,
+    totale: a.totale,
+    stato,
+    scadenza: document.getElementById('mScadenza').value,
+    dataPagamento,
+    note: document.getElementById('mNote').value.trim(),
+    aggiuntoDa: esistente ? (esistente.aggiuntoDa || whoami()) : whoami()
   };
-  if(id){
-    const idx = eventi.findIndex(x=>x.id===id);
-    if(idx>-1) eventi[idx] = obj;
-  } else {
-    eventi.push(obj);
-  }
+  // prima salvo sul foglio, poi aggiorno la schermata: così non si vede mai un dato "salvato" che non lo è
+  btn.disabled = true;
+  const etichetta = btn.textContent;
+  btn.textContent = 'Salvo…';
   try{
-    await apiSave('eventi', obj);
+    await apiSave('movimenti', obj);
   }catch(e){
     alert('Errore di salvataggio sul foglio: ' + e.message);
     return;
+  }finally{
+    btn.disabled = false;
+    btn.textContent = etichetta;
   }
-  closeModal('modalEvento');
-  renderEventi();
+  const idx = movimenti.findIndex(x => x.id === obj.id);
+  if(idx > -1) movimenti[idx] = obj; else movimenti.push(obj);
+  closeModal('modalMovimento');
+  renderContabilita();
   renderDashboard();
 });
 
-function editEvento(id){
-  const e = eventi.find(x=>x.id===id);
-  if(!e) return;
-  document.getElementById('eventoModalTitle').textContent = 'Modifica evento';
-  document.getElementById('eId').value = e.id;
-  document.getElementById('eNome').value = e.nome || '';
-  document.getElementById('eCategoria').value = e.categoria || 'Formazione';
-  document.getElementById('eStatoData').value = e.statoData || 'Da verificare';
-  document.getElementById('eDataInizio').value = e.dataInizio || '';
-  document.getElementById('eDataFine').value = e.dataFine || '';
-  document.getElementById('eOrario').value = e.orario || '';
-  document.getElementById('eCosto').value = e.costo || '';
-  document.getElementById('eLuogo').value = e.luogo || '';
-  document.getElementById('eOrganizzatore').value = e.organizzatore || '';
-  document.getElementById('ePerche').value = e.perche || '';
-  document.getElementById('eIscrizione').value = e.iscrizione || 'Da decidere';
-  const chi = e.chiPartecipa || [];
-  document.querySelectorAll('.eChi').forEach(cb=>{ cb.checked = chi.includes(cb.value); });
-  document.getElementById('eProssimaAzione').value = e.prossimaAzione || '';
-  document.getElementById('eLink').value = e.link || '';
-  document.getElementById('eNote').value = e.note || '';
-  openModalEl('modalEvento');
+async function toggleMovimentoStato(id){
+  const m = movimenti.find(x => x.id === id);
+  if(!m) return;
+  const prima = { stato: m.stato, dataPagamento: m.dataPagamento };
+  const [aperto, chiuso] = statiPerTipo(m.tipo);
+  if(movIsOpen(m)){ m.stato = chiuso; m.dataPagamento = todayISO(); }
+  else { m.stato = aperto; m.dataPagamento = ''; }
+  renderContabilita(); renderDashboard();
+  try{
+    await apiSave('movimenti', m);
+  }catch(e){
+    m.stato = prima.stato; m.dataPagamento = prima.dataPagamento; // annullo: sul foglio non è cambiato nulla
+    renderContabilita(); renderDashboard();
+    alert('Non sono riuscito a salvare il cambio di stato, quindi l\'ho annullato: ' + e.message);
+  }
 }
 
-async function deleteEvento(id){
-  if(!confirm('Eliminare questo evento?')) return;
+async function deleteMovimento(id){
+  if(!confirm('Eliminare questo movimento?')) return;
   try{
-    await apiDelete('eventi', id);
+    await apiDelete('movimenti', id);
   }catch(e){
     alert('Errore nell\'eliminazione: ' + e.message);
     return;
   }
-  eventi = eventi.filter(x=>x.id!==id);
-  renderEventi(); renderDashboard();
+  movimenti = movimenti.filter(m => m.id !== id);
+  renderContabilita(); renderDashboard();
 }
 
-function renderEventi(){
-  const search = document.getElementById('eventiSearch').value.toLowerCase();
-  const fCat = document.getElementById('eventiFiltroCategoria').value;
-  const fIscr = document.getElementById('eventiFiltroIscrizione').value;
-  const ordina = document.getElementById('eventiOrdina').value;
-  const mostraPassati = document.getElementById('eventiMostraPassati').checked;
-  let list = eventi.filter(e=>{
-    if(!mostraPassati && isEventoPassato(e)) return false;
-    if(fCat && e.categoria !== fCat) return false;
-    if(fIscr && e.iscrizione !== fIscr) return false;
-    if(search){
-      const hay = [e.nome, e.luogo, e.organizzatore, e.perche, e.prossimaAzione, e.note].join(' ').toLowerCase();
-      if(!hay.includes(search)) return false;
-    }
-    return true;
-  });
-  list.sort((a,b)=>{
-    const da = String(a.dataInizio || '9999-12-31');
-    const db = String(b.dataInizio || '9999-12-31');
-    const ca = EV_CAT_ORDER[a.categoria] || 9;
-    const cb = EV_CAT_ORDER[b.categoria] || 9;
-    if(ordina === 'data') return da.localeCompare(db) || (ca - cb);
-    return (ca - cb) || da.localeCompare(db);
-  });
-  const container = document.getElementById('eventiList');
-  if(list.length === 0){
-    container.innerHTML = '<div class="empty-state">Nessun evento trovato. Aggiungine uno o importa il file JSON.</div>';
-    return;
-  }
-  container.innerHTML = list.map(e=>{
-    const quando = quandoEvento(e);
-    const linkOk = e.link && /^https?:\/\//i.test(e.link);
-    return `
-    <div class="item-card">
-      <div class="item-top">
-        <div>
-          <div class="item-title">${esc(e.nome)}</div>
-          <div class="item-meta">
-            ${e.categoria ? `<span class="badge ${evCatClass(e.categoria)}">${esc(e.categoria)}</span>` : ''}
-            ${e.iscrizione ? `<span class="badge ${evIscrClass(e.iscrizione)}">${esc(e.iscrizione)}</span>` : ''}
-            ${e.statoData && e.statoData !== 'Confermata' ? ' · data: '+esc(e.statoData) : ''}
-            ${quando ? ' · '+esc(quando) : ''}
-            ${e.orario ? ' · '+esc(e.orario) : ''}
-            ${e.luogo ? ' · '+esc(e.luogo) : ''}
-            ${e.organizzatore ? ' · '+esc(e.organizzatore) : ''}
-            ${e.costo ? ' · '+esc(e.costo) : ''}
-          </div>
-          ${e.prossimaAzione ? `<div class="item-meta" style="margin-top:4px; color:var(--terracotta); font-weight:600;">→ ${esc(e.prossimaAzione)}</div>` : ''}
-        </div>
-        <div class="item-actions">
-          <button class="btn btn-small btn-ghost" onclick="editEvento('${e.id}')">Modifica</button>
-          <button class="btn btn-small btn-danger" onclick="deleteEvento('${e.id}')">Elimina</button>
-        </div>
-      </div>
-      ${(e.chiPartecipa && e.chiPartecipa.length) ? `<div class="tags">${e.chiPartecipa.map(n=>`<span class="badge-persona badge-persona-${esc(n)}">${esc(n)}</span>`).join('')}</div>` : ''}
-      ${e.perche ? `<div class="item-notes">${esc(e.perche)}</div>` : ''}
-      ${linkOk ? `<div class="item-link" style="margin-top:8px;"><a href="${esc(e.link)}" target="_blank" rel="noopener noreferrer">Apri la pagina dell'evento ↗</a></div>` : ''}
-      ${e.note ? `<div class="item-notes">${esc(e.note)}</div>` : ''}
-    </div>`;
-  }).join('');
-}
-document.getElementById('eventiSearch').addEventListener('input', renderEventi);
-document.getElementById('eventiFiltroCategoria').addEventListener('change', renderEventi);
-document.getElementById('eventiFiltroIscrizione').addEventListener('change', renderEventi);
-document.getElementById('eventiOrdina').addEventListener('change', renderEventi);
-document.getElementById('eventiMostraPassati').addEventListener('change', renderEventi);
-document.getElementById('exportEventi').addEventListener('click', ()=>downloadJson(eventi,'eventi-nysalab.json'));
-document.getElementById('importEventiBtn').addEventListener('click', ()=> document.getElementById('importEventiFile').click());
-document.getElementById('importEventiFile').addEventListener('change', async (e)=>{
+// ---- collegamenti ----
+document.getElementById('tabPrimaNota').addEventListener('click', () => { contabTab = 'primanota'; renderContabilita(); });
+document.getElementById('tabScadenziario').addEventListener('click', () => { contabTab = 'scadenziario'; renderContabilita(); });
+['contabFiltroTipo', 'contabAnno', 'contabMese', 'contabFiltroStato'].forEach(id =>
+  document.getElementById(id).addEventListener('change', renderContabilita));
+document.getElementById('contabSearch').addEventListener('input', renderContabilita);
+document.getElementById('mTipo').addEventListener('change', () => { movFillLists(); movFillStati(''); });
+['mImporto', 'mAliquota'].forEach(id => document.getElementById(id).addEventListener('input', movUpdateCalcolo));
+document.getElementById('mModo').addEventListener('change', movUpdateCalcolo);
+
+document.getElementById('exportMovimenti').addEventListener('click', () => downloadJson(movimenti, 'movimenti-nysalab.json'));
+document.getElementById('exportMovimentiCsv').addEventListener('click', () => {
+  const anno = document.getElementById('contabAnno').value;
+  const mese = document.getElementById('contabMese').value;
+  const righe = filtraPeriodo(movimenti, anno, mese);
+  if(!righe.length){ alert('Nessun movimento nel periodo selezionato.'); return; }
+  const blob = new Blob([buildMovimentiCsv(righe, progetti)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `movimenti-nysalab-${anno || 'tutti'}${anno && mese ? '-' + mese : ''}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+document.getElementById('importMovimentiBtn').addEventListener('click', () => document.getElementById('importMovimentiFile').click());
+document.getElementById('importMovimentiFile').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if(!file) return;
-  const done = await importJsonFile(file, 'eventi');
+  const done = await importJsonFile(file, 'movimenti');
   e.target.value = '';
-  if(done){ eventi = await apiList('eventi'); renderEventi(); renderDashboard(); }
+  if(done){ movimenti = await apiList('movimenti'); renderContabilita(); renderDashboard(); }
 });
+
 
 // ================= DASHBOARD =================
 function renderDashboard(){
@@ -1759,7 +1966,6 @@ function renderDashboard(){
   const daAvviare = progetti.filter(p=>p.stato==='Da avviare').length;
   const disponibili = candidati.filter(v=>v.disponibilita==='Disponibile').length;
   const daFareAperti = todos.filter(t=>t.stato!=='Fatto').length;
-  const eventiInArrivo = eventi.filter(isEventoFuturo).length;
   document.getElementById('statGrid').innerHTML = `
     <div class="stat-card"><div class="num">${progetti.length}</div><div class="label">Progetti totali</div></div>
     <div class="stat-card"><div class="num">${attivi}</div><div class="label">In corso</div></div>
@@ -1767,7 +1973,6 @@ function renderDashboard(){
     <div class="stat-card"><div class="num">${contatti.length}</div><div class="label">Contatti</div></div>
     <div class="stat-card"><div class="num">${disponibili}</div><div class="label">Candidati disponibili</div></div>
     <div class="stat-card"><div class="num">${daFareAperti}</div><div class="label">Da fare aperti</div></div>
-    <div class="stat-card"><div class="num">${eventiInArrivo}</div><div class="label">Eventi in arrivo</div></div>
   `;
 
   const today = new Date();
@@ -1823,16 +2028,19 @@ function renderDashboard(){
     </div>`;
   }).join('') : '<div class="empty-state">Nessun impegno aperto al momento.</div>';
 
-  const prossimiEv = eventi.filter(isEventoFuturo)
-    .sort((a,b)=> String(a.dataInizio).localeCompare(String(b.dataInizio)))
-    .slice(0,5);
-  const dev = document.getElementById('dashEventi');
-  dev.innerHTML = prossimiEv.length ? prossimiEv.map(e=>`
+  const tra30 = addDaysISO(30);
+  const inScad = movimenti.filter(m => movIsOpen(m) && m.scadenza && String(m.scadenza) <= tra30)
+    .sort((a,b) => String(a.scadenza).localeCompare(String(b.scadenza)))
+    .slice(0, 8);
+  document.getElementById('dashContab').innerHTML = inScad.length ? inScad.map(m => {
+    const scaduto = movIsOverdue(m);
+    return `
     <div class="deadline-row">
-      <span>${esc(e.nome)} ${e.categoria ? `<span class="badge ${evCatClass(e.categoria)}" style="margin-left:6px;">${esc(e.categoria)}</span>` : ''}</span>
-      <span class="date">${esc(quandoEvento(e))}</span>
-    </div>
-  `).join('') : '<div class="empty-state">Nessun evento in programma.</div>';
+      <span>${esc(m.descrizione)}${m.controparte ? ' — ' + esc(m.controparte) : ''}
+        <span class="badge ${m.tipo === 'Entrata' ? 'badge-mov-entrata' : 'badge-mov-uscita'}" style="margin-left:6px;">${esc(m.stato)}</span></span>
+      <span class="date" style="${scaduto ? 'color:#b0402a;' : ''}">${esc(String(m.scadenza))} · ${fmtEur(m.totale)}</span>
+    </div>`;
+  }).join('') : '<div class="empty-state">Nessun incasso o pagamento in scadenza nei prossimi 30 giorni.</div>';
 }
 
 // ---------- utils ----------
@@ -1904,7 +2112,7 @@ async function loadAllData(){
     { key:'contatti',  label:'Contatti',    set: v => { contatti = v; } },
     { key:'candidati', label:'Archivio CV', set: v => { candidati = v; } },
     { key:'todo',      label:'Da fare',     set: v => { todos = v; } },
-    { key:'eventi',    label:'Eventi',      set: v => { eventi = v; } }
+    { key:'movimenti', label:'Contabilità', set: v => { movimenti = v; } }
   ];
   showBanner('Carico i dati dal foglio Google…', 'info', false);
   const falliti = [];
@@ -1916,7 +2124,7 @@ async function loadAllData(){
       falliti.push({ label: s.label, motivo: e.message });
     }
     // mostro subito quello che è arrivato, senza aspettare gli altri
-    renderDashboard(); renderProgetti(); renderContatti(); renderCv(); renderTodo(); renderEventi();
+    renderDashboard(); renderProgetti(); renderContatti(); renderCv(); renderTodo(); renderContabilita();
   }
   if(falliti.length === 0){
     hideBanner();
