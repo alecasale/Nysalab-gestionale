@@ -263,6 +263,16 @@
     padding:8px 12px; font-size:0.84rem; color:var(--ink-soft); margin-bottom:13px;
   }
 
+  .badge-todo-incorso{ background:#cfe0f0; color:#1f4e79; }
+  .badge-todo-inattesa{ background:#f0dcae; color:#7a5410; }
+  .todo-stato{
+    font-size:0.74rem; font-weight:700; padding:2px 6px; border-radius:20px;
+    border:1px solid var(--border); background:#fff; color:var(--ink-soft);
+    cursor:pointer; font-family:inherit; width:auto;
+  }
+  .todo-stato.st-incorso{ background:#cfe0f0; color:#1f4e79; border-color:#b5cfe6; }
+  .todo-stato.st-inattesa{ background:#f0dcae; color:#7a5410; border-color:#e6cd94; }
+
   @media (max-width: 760px){
     body{ flex-direction:column; }
     .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; overflow-x:auto; align-items:center; }
@@ -453,6 +463,10 @@
       <select id="todoFiltroChi">
         <option value="">Tutti</option>
         <option>Ale</option><option>Umasha</option>
+      </select>
+      <select id="todoFiltroStato">
+        <option value="">Tutti gli stati</option>
+        <option>Da fare</option><option>In corso</option><option>In attesa</option><option>Fatto</option>
       </select>
       <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--ink-soft); cursor:pointer;">
         <input type="checkbox" id="todoMostraCompletati" style="width:auto;"> Mostra completati
@@ -783,9 +797,17 @@
   <div class="modal">
     <h3 id="todoModalTitle">Nuovo da fare</h3>
     <input type="hidden" id="tId">
-    <div class="field">
-      <label>Chi</label>
-      <select id="tResponsabile"><option>Ale</option><option>Umasha</option></select>
+    <div class="field-row">
+      <div class="field">
+        <label>Chi</label>
+        <select id="tResponsabile"><option>Ale</option><option>Umasha</option></select>
+      </div>
+      <div class="field">
+        <label>Stato</label>
+        <select id="tStato">
+          <option>Da fare</option><option>In corso</option><option>In attesa</option><option>Fatto</option>
+        </select>
+      </div>
     </div>
     <div class="field">
       <label>Cosa</label>
@@ -1583,6 +1605,7 @@ document.getElementById('openTodoModal').addEventListener('click', ()=>{
   document.getElementById('todoModalTitle').textContent = 'Nuovo da fare';
   document.getElementById('tId').value = '';
   document.getElementById('tResponsabile').value = whoami();
+  document.getElementById('tStato').value = 'Da fare';
   document.getElementById('tTesto').value = '';
   document.getElementById('tData').value = '';
   document.getElementById('tOra').value = '';
@@ -1600,13 +1623,12 @@ document.getElementById('saveTodo').addEventListener('click', async ()=>{
     testo,
     data: document.getElementById('tData').value,
     ora: document.getElementById('tOra').value,
-    stato: (id && todos.find(t=>t.id===id)) ? todos.find(t=>t.id===id).stato : 'Da fare',
+    stato: document.getElementById('tStato').value,
     note: document.getElementById('tNote').value.trim(),
     aggiuntoDa: whoami()
   };
   if(id){
     const idx = todos.findIndex(t=>t.id===id);
-    if(idx>-1) obj.stato = todos[idx].stato; // preserva stato esistente
     if(idx>-1) todos[idx] = obj;
   } else {
     todos.push(obj);
@@ -1628,6 +1650,7 @@ function editTodo(id){
   document.getElementById('todoModalTitle').textContent = 'Modifica da fare';
   document.getElementById('tId').value = t.id;
   setSelectValue('tResponsabile', t.responsabile, 'Ale');
+  document.getElementById('tStato').value = statoTodo(t);
   document.getElementById('tTesto').value = t.testo;
   document.getElementById('tData').value = t.data || '';
   document.getElementById('tOra').value = t.ora || '';
@@ -1647,29 +1670,52 @@ async function deleteTodo(id){
   renderTodo(); renderDashboard();
 }
 
-async function toggleTodoDone(id){
+// stato "normalizzato": i vecchi da fare senza stato valgono "Da fare"
+function statoTodo(t){
+  return ['In corso', 'In attesa', 'Fatto'].includes(t.stato) ? t.stato : 'Da fare';
+}
+function todoStatoKey(st){ return String(st).replace(/\s/g, '').toLowerCase(); }
+
+// cambia lo stato e, se il salvataggio fallisce, lo rimette com'era (sul foglio non è cambiato nulla)
+async function cambiaStatoTodo(id, nuovo){
   const t = todos.find(x=>x.id===id);
   if(!t) return;
-  t.stato = (t.stato === 'Fatto') ? 'Da fare' : 'Fatto';
-  renderTodo(); // aggiorna subito, senza aspettare il salvataggio
+  const prima = t.stato;
+  t.stato = nuovo;
+  renderTodo(); renderDashboard();
   try{
     await apiSave('todo', t);
   }catch(e){
-    alert('Errore di salvataggio: ' + e.message);
+    t.stato = prima;
+    renderTodo(); renderDashboard();
+    alert('Non sono riuscito a salvare il cambio di stato, quindi l\'ho annullato: ' + e.message);
   }
-  renderDashboard();
+}
+function setTodoStato(id, nuovo){
+  const t = todos.find(x=>x.id===id);
+  if(!t || statoTodo(t) === nuovo) return;
+  return cambiaStatoTodo(id, nuovo);
+}
+// la casella di spunta: un da fare aperto (qualunque stato) diventa Fatto; uno Fatto torna "Da fare"
+function toggleTodoDone(id){
+  const t = todos.find(x=>x.id===id);
+  if(!t) return;
+  return cambiaStatoTodo(id, statoTodo(t) === 'Fatto' ? 'Da fare' : 'Fatto');
 }
 
 function renderTodo(){
   const fChi = document.getElementById('todoFiltroChi').value;
+  const fStato = document.getElementById('todoFiltroStato').value;
   const mostraCompletati = document.getElementById('todoMostraCompletati').checked;
   let list = todos.filter(t=>{
     if(fChi && t.responsabile !== fChi) return false;
-    if(!mostraCompletati && t.stato === 'Fatto') return false;
+    if(fStato) return statoTodo(t) === fStato;   // se scegli uno stato, vale quello (anche "Fatto")
+    if(!mostraCompletati && statoTodo(t) === 'Fatto') return false;
     return true;
   });
   list.sort((a,b)=>{
-    if(a.stato !== b.stato) return a.stato === 'Fatto' ? 1 : -1;
+    const fa = statoTodo(a) === 'Fatto', fb = statoTodo(b) === 'Fatto';
+    if(fa !== fb) return fa ? 1 : -1;   // prima i da fare aperti, in fondo i fatti
     return (a.data||'9999').localeCompare(b.data||'9999') || (a.ora||'99:99').localeCompare(b.ora||'99:99');
   });
   const container = document.getElementById('todoList');
@@ -1678,7 +1724,8 @@ function renderTodo(){
     return;
   }
   container.innerHTML = list.map(t=>{
-    const done = t.stato === 'Fatto';
+    const stato = statoTodo(t);
+    const done = stato === 'Fatto';
     const quando = [t.data, t.ora].filter(Boolean).join(' · ');
     return `
     <div class="item-card">
@@ -1688,6 +1735,9 @@ function renderTodo(){
           <div class="todo-text">${esc(t.testo)}</div>
           <div class="todo-meta">
             <span class="badge-persona badge-persona-${esc(t.responsabile)}">${esc(t.responsabile)}</span>
+            ${done ? '' : `<select class="todo-stato st-${todoStatoKey(stato)}" onchange="setTodoStato('${t.id}', this.value)" title="Cambia stato">
+              ${['Da fare','In corso','In attesa'].map(o=>`<option${o===stato?' selected':''}>${o}</option>`).join('')}
+            </select>`}
             ${quando ? ' · '+esc(quando) : ''}
           </div>
           ${t.note ? `<div class="item-notes">${esc(t.note)}</div>` : ''}
@@ -1701,6 +1751,7 @@ function renderTodo(){
   }).join('');
 }
 document.getElementById('todoFiltroChi').addEventListener('change', renderTodo);
+document.getElementById('todoFiltroStato').addEventListener('change', renderTodo);
 document.getElementById('todoMostraCompletati').addEventListener('change', renderTodo);
 document.getElementById('exportTodo').addEventListener('click', ()=>downloadJson(todos,'da-fare-nysalab.json'));
 document.getElementById('importTodoBtn').addEventListener('click', ()=> document.getElementById('importTodoFile').click());
@@ -2317,7 +2368,7 @@ function renderDashboard(){
   const attivi = progetti.filter(p=>p.stato==='In corso').length;
   const daAvviare = progetti.filter(p=>p.stato==='Da avviare').length;
   const disponibili = candidati.filter(v=>v.disponibilita==='Disponibile').length;
-  const daFareAperti = todos.filter(t=>t.stato!=='Fatto').length;
+  const daFareAperti = todos.filter(t=>statoTodo(t)!=='Fatto').length;
   const eventiInArrivo = eventi.filter(isEventoFuturo).length;
   document.getElementById('statGrid').innerHTML = `
     <div class="stat-card"><div class="num">${progetti.length}</div><div class="label">Progetti totali</div></div>
@@ -2369,7 +2420,7 @@ function renderDashboard(){
 
   const chi = whoami();
   document.getElementById('dashTodoTitle').textContent = `I prossimi impegni di ${chi}`;
-  const mieiTodo = todos.filter(t=>t.responsabile===chi && t.stato!=='Fatto')
+  const mieiTodo = todos.filter(t=>t.responsabile===chi && statoTodo(t)!=='Fatto')
     .sort((a,b)=> (a.data||'9999').localeCompare(b.data||'9999') || (a.ora||'99:99').localeCompare(b.ora||'99:99'))
     .slice(0,6);
   const dt = document.getElementById('dashTodo');
@@ -2377,7 +2428,7 @@ function renderDashboard(){
     const quando = [t.data, t.ora].filter(Boolean).join(' · ');
     return `
     <div class="deadline-row">
-      <span>${esc(t.testo)}</span>
+      <span>${esc(t.testo)}${statoTodo(t) !== 'Da fare' ? ` <span class="badge badge-todo-${todoStatoKey(statoTodo(t))}" style="margin-left:6px;">${esc(statoTodo(t))}</span>` : ''}</span>
       <span class="date">${esc(quando)}</span>
     </div>`;
   }).join('') : '<div class="empty-state">Nessun impegno aperto al momento.</div>';
