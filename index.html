@@ -2602,6 +2602,22 @@ document.getElementById('importCvFile').addEventListener('change', async (e)=>{
   if(done){ candidati = await apiList('candidati'); renderCv(); renderDashboard(); }
 });
 
+// ---------- "Chi sei": ricorda l'ultima scelta su questo browser ----------
+// Il nome resta salvato nel browser di questo dispositivo (come l'indirizzo dello script):
+// a ogni apertura il selettore riparte da chi lo ha usato per ultimo.
+const UTENTE_KEY = 'nysalab_utente';
+(function ricordaUtente(){
+  const sel = document.getElementById('whoamiSelect');
+  try{
+    const salvato = localStorage.getItem(UTENTE_KEY);
+    // ci si fida del valore salvato solo se è ancora uno dei nomi del menu
+    if(salvato && Array.from(sel.options).some(o => o.value === salvato)) sel.value = salvato;
+  }catch(e){ /* browser senza memoria (es. navigazione privata): si riparte dal primo nome */ }
+  sel.addEventListener('change', () => {
+    try{ localStorage.setItem(UTENTE_KEY, sel.value); }catch(e){ /* niente memoria: nessun problema */ }
+  });
+})();
+
 // ---------- init ----------
 async function init(){
   backendUrl = getBackendUrl();
